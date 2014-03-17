@@ -4,5 +4,7 @@
     <string name="app_name">ScreenKeeper</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="activated">Activated</string>
+    <string name="not_activated">Not in Activated</string>
 
 </resources>
