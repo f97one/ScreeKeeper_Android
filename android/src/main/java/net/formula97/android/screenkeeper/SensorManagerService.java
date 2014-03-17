@@ -1,13 +1,21 @@
 package net.formula97.android.screenkeeper;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
 import android.os.IBinder;
 
 /**
  * Created by HAJIME on 14/03/14.
  */
 public class SensorManagerService extends Service {
+
+    Handler mHandler;
+
     /**
      * Return the communication channel to the service.  May return null if
      * clients can not bind to the service.  The returned
@@ -73,6 +81,28 @@ public class SensorManagerService extends Service {
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        return super.onStartCommand(intent, flags, startId);
+        super.onStartCommand(intent, flags, startId);
+
+        mHandler = new Handler();
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+        showNotification(true, pendingIntent);
+
+        return START_STICKY_COMPATIBILITY;
+    }
+
+    public void showNotification(boolean isAvailable, PendingIntent intent) {
+        Context ctx = getApplicationContext();
+
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        Notification.Builder builder = new Notification.Builder(getApplicationContext());
+        builder.setContentTitle(getString(R.string.app_name))
+                .setSmallIcon(R.drawable.ic_launcher);
+
+        if (isAvailable) {
+            builder.setContentText(getString(R.string.activated));
+        } else {
+            builder.setContentText(getString(R.string.not_activated));
+        }
     }
 }
