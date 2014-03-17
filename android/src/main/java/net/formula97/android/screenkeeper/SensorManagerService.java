@@ -9,8 +9,11 @@ import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.IBinder;
+
+import java.util.List;
 
 /**
  * Created by HAJIME on 14/03/14.
@@ -18,6 +21,9 @@ import android.os.IBinder;
 public class SensorManagerService extends Service implements SensorEventListener {
 
     Handler mHandler;
+    SensorManager sensorManager;
+    boolean isMagSensor;
+    boolean isAccSensor;
 
     /**
      * Return the communication channel to the service.  May return null if
@@ -86,11 +92,47 @@ public class SensorManagerService extends Service implements SensorEventListener
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
 
+        // 傾きセンサーの登録
+        //     Sensor.TYPE_ORIENTATIONがAPI 8から非推奨になったので、加速度センサー(Sensor.TYPE_ACCELEROMETER)と
+        //   地磁気センサー(Sensor.TYPE_MAGNETIC_FIELD)を組み合わせて。角度を得る必要がある。
+        //     センサー感度は一般UI向け(SensorManager.SENSOR_DELAY_UI)にする。
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        List<Sensor> sensorList = sensorManager.getSensorList(Sensor.TYPE_ALL);
+        for (Sensor sensor : sensorList) {
+            // 加速度センサー(Sensor.TYPE_ACCELEROMETER)の登録
+            if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+                sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI);
+                isMagSensor = true;
+            }
+            // 地磁気センサー(Sensor.TYPE_MAGNETIC_FIELD)の登録
+            if (sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+                sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI);
+                isAccSensor = true;
+            }
+        }
+
         mHandler = new Handler();
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
         showNotification(true, pendingIntent);
 
         return START_STICKY_COMPATIBILITY;
+    }
+
+    /**
+     * Called by the system to notify a Service that it is no longer used and is being removed.  The
+     * service should clean up any resources it holds (threads, registered
+     * receivers, etc) at this point.  Upon return, there will be no more calls
+     * in to this Service object and it is effectively dead.  Do not call this method directly.
+     */
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (isAccSensor || isMagSensor) {
+            sensorManager.unregisterListener(this);
+            isMagSensor = false;
+            isAccSensor = false;
+        }
     }
 
     public void showNotification(boolean isAvailable, PendingIntent intent) {
@@ -125,7 +167,7 @@ public class SensorManagerService extends Service implements SensorEventListener
      */
     @Override
     public void onSensorChanged(SensorEvent event) {
-        
+
     }
 
     /**
