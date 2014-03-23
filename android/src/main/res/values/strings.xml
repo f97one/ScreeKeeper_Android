@@ -8,5 +8,6 @@
     <string name="not_activated">Not in Activated</string>
     <string name="activate_on_startup">Activate me on Startup</string>
     <string name="start_manually">Start Manually</string>
+    <string name="stop_manually">Stop Manually</string>
 
 </resources>
