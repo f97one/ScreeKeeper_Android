@@ -10,8 +10,13 @@ public class ScreenReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        // TODO: This method is called when the BroadcastReceiver is receiving
-        // an Intent broadcast.
-        throw new UnsupportedOperationException("Not yet implemented");
+
+        final String action = intent.getAction();
+
+        if (action.equals(Intent.ACTION_SCREEN_ON)) {
+            // ToDo: スクリーン点灯時の処理を書く
+        } else if (action.equals(Intent.ACTION_SCREEN_OFF)) {
+            // ToDo: スクリーン消灯時の処理（＝サービスが開始されている場合は停止）を書く
+        }
     }
 }
