@@ -23,15 +23,8 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".ScreenReceiver" />
-
         <service android:name="net.formula97.android.screenkeeper.SensorManagerService" />
 
-        <receiver
-            android:name="net.formula97.android.screenkeeper.ScreenReceiver"
-            android:enabled="true"
-            android:exported="true" >
-        </receiver>
     </application>
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
