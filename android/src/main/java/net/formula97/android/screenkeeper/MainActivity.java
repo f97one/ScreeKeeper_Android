@@ -30,17 +30,29 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
 
+        // チェックボックスにPreferenceの値を反映する
         SharedPreferences pref = getPref();
         cb_startUp.setChecked(pref.getBoolean("StartAfterBoot", false));
 
+        // サービスの実行状況に応じて、ボタンのキャプションを変更する
+        if (isKeeperRunning()) {
+            btn_startStopManually.setText(R.string.start_manually);
+        } else {
+            btn_startStopManually.setText(R.string.stop_manually);
+        }
+
+        // ボタンを押した時の処理
+        //   ボタンがひとつしかないので無名関数にする
         btn_startStopManually.setOnClickListener(new View.OnClickListener() {
             Intent intent = new Intent(getApplicationContext(), SensorManagerService.class);
             @Override
             public void onClick(View v) {
                 if (isKeeperRunning()) {
                     startService(intent);
+                    btn_startStopManually.setText(R.string.stop_manually);
                 } else {
                     stopService(intent);
+                    btn_startStopManually.setText(R.string.start_manually);
                 }
             }
         });
@@ -49,8 +61,17 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+
+        // チェックボックスの値をPreferenceに反映する
+        SharedPreferences.Editor editor = getPref().edit();
+        editor.putBoolean("StartAfterBoot", cb_startUp.isChecked());
+        editor.commit();
     }
 
+    /**
+     * SharedPreferencesを取得する。
+     * @return SharedPreferences型、プリファレンスのインスタンス
+     */
     private SharedPreferences getPref() {
         return getSharedPreferences("ScreenKeeper_pref", MODE_PRIVATE);
     }
