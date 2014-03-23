@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -27,6 +28,7 @@ class SensorManagerService extends Service implements SensorEventListener {
     private SensorManager sensorManager;
     private boolean isMagSensor;
     private boolean isAccSensor;
+    final ScreenReceiver screenReceiver = new ScreenReceiver();
 
     public boolean isScreenOn() {
         return isScreenOn;
@@ -41,27 +43,6 @@ class SensorManagerService extends Service implements SensorEventListener {
 
     boolean isScreenOn;
 
-    /**
-     * Return the communication channel to the service.  May return null if
-     * clients can not bind to the service.  The returned
-     * {@link android.os.IBinder} is usually for a complex interface
-     * that has been <a href="{@docRoot}guide/components/aidl.html">described using
-     * aidl</a>.
-     * <p/>
-     * <p><em>Note that unlike other application components, calls on to the
-     * IBinder interface returned here may not happen on the main thread
-     * of the process</em>.  More information about the main thread can be found in
-     * <a href="{@docRoot}guide/topics/fundamentals/processes-and-threads.html">Processes and
-     * Threads</a>.</p>
-     *
-     * @param intent The Intent that was used to bind to this service,
-     *               as given to {@link android.content.Context#bindService
-     *               Context.bindService}.  Note that any extras that were included with
-     *               the Intent at that point will <em>not</em> be seen here.
-     * @return Return an IBinder through which clients can call on to the
-     * service.
-     */
-    @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
@@ -132,7 +113,8 @@ class SensorManagerService extends Service implements SensorEventListener {
         showNotification(true, pendingIntent);
 
         // スクリーン点灯／消灯を検知するレシーバーを登録
-        final ScreenReceiver screenReceiver = new ScreenReceiver();
+        //   AndroidManifest.xmlに書く方法では、ブロードキャストがキャッチできないので、プログラムで
+        //   動的にフィルタとレシーバーを登録する。
         IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
         this.registerReceiver(screenReceiver, filter);
         filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
@@ -156,6 +138,9 @@ class SensorManagerService extends Service implements SensorEventListener {
             isMagSensor = false;
             isAccSensor = false;
         }
+
+        // スクリーンの点灯／消灯を検知するレシーバーの削除
+        this.unregisterReceiver(screenReceiver);
     }
 
     void showNotification(boolean isAvailable, PendingIntent intent) {
@@ -188,7 +173,41 @@ class SensorManagerService extends Service implements SensorEventListener {
      */
     @Override
     public void onSensorChanged(SensorEvent event) {
+        // 加速度と地磁気の配列
+        float[] accValues = new float[3];
+        float[] geoMatrix = new float[3];
+        float[] rotationMatrix = new float[9];
+        float[] attitude = new float[3];
 
+        final double RAD2DEG = 180 / Math.PI;
+
+        // Preferenceの最小角度と最大角度を取得する
+        SharedPreferences pref = getSharedPreferences("ScreenKeeper_pref", MODE_PRIVATE);
+        int minPitch = pref.getInt("MinimumPitch", 5);
+        int maxPitch = pref.getInt("MaximumPitch", 80);
+
+        // 実際のコールバックに対する処理
+        switch (event.sensor.getType()) {
+            case Sensor.TYPE_ACCELEROMETER:
+                accValues = event.values.clone();
+                break;
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                geoMatrix = event.values.clone();
+                break;
+        }
+
+        if (geoMatrix != null && accValues != null) {
+            SensorManager.getRotationMatrix(rotationMatrix, null, accValues, geoMatrix);
+            SensorManager.getOrientation(rotationMatrix, attitude);
+
+            // 現在のピッチがPreferenceの設定値以内の場合は、
+            int currentPitch = (int)(attitude[1] * RAD2DEG);
+            if (currentPitch >= minPitch && currentPitch <= maxPitch) {
+                if (isScreenOn()) {
+                    // ToDo: スリープ無効の処理を書く
+                }
+            }
+        }
     }
 
     /**
@@ -204,6 +223,9 @@ class SensorManagerService extends Service implements SensorEventListener {
 
     }
 
+    /**
+     * スクリーンの点灯／消灯を検知するBroadcastReceiver。
+     */
     private class ScreenReceiver extends BroadcastReceiver {
 
         @Override
