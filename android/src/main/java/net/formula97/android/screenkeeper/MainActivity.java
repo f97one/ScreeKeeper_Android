@@ -10,8 +10,8 @@ import android.widget.CheckBox;
 
 public class MainActivity extends Activity {
 
-    CheckBox cb_startUp;
-    Button btn_startStopManually;
+    private CheckBox cb_startUp;
+    private Button btn_startStopManually;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +43,7 @@ public class MainActivity extends Activity {
         // ボタンを押した時の処理
         //   ボタンがひとつしかないので無名関数にする
         btn_startStopManually.setOnClickListener(new View.OnClickListener() {
-            Intent intent = new Intent(getApplicationContext(), SensorManagerService.class);
+            final Intent intent = new Intent(getApplicationContext(), SensorManagerService.class);
             @Override
             public void onClick(View v) {
                 if (util.isKeeperRunning(keeper)) {

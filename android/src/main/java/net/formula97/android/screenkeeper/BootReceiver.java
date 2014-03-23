@@ -9,7 +9,7 @@ import android.content.SharedPreferences;
  * スタートアップ起動を行うBroadcastReceiver。<br />
  * Created by HAJIME Fukuna on 14/03/14.
  */
-public class BootReceiver extends BroadcastReceiver {
+class BootReceiver extends BroadcastReceiver {
     /**
      * ACTION_BOOT_COMPLETEDブロードキャストをトリガーに、センサー検知サービスを起動する。<br />
      *

@@ -19,12 +19,12 @@ import java.util.List;
 /**
  * Created by HAJIME on 14/03/14.
  */
-public class SensorManagerService extends Service implements SensorEventListener {
+class SensorManagerService extends Service implements SensorEventListener {
 
-    Handler mHandler;
-    SensorManager sensorManager;
-    boolean isMagSensor;
-    boolean isAccSensor;
+    private Handler mHandler;
+    private SensorManager sensorManager;
+    private boolean isMagSensor;
+    private boolean isAccSensor;
 
     /**
      * Return the communication channel to the service.  May return null if
@@ -136,9 +136,7 @@ public class SensorManagerService extends Service implements SensorEventListener
         }
     }
 
-    public void showNotification(boolean isAvailable, PendingIntent intent) {
-        Context ctx = getApplicationContext();
-
+    void showNotification(boolean isAvailable, PendingIntent intent) {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         Notification.Builder builder = new Notification.Builder(getApplicationContext());

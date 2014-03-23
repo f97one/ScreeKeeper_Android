@@ -31,7 +31,7 @@ public class SvcUtil {
     public boolean isKeeperRunning(String serviceCanonicalName) {
         boolean ret = false;
 
-        ActivityManager manager = (ActivityManager)mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager manager = (ActivityManager)getContext().getSystemService(Context.ACTIVITY_SERVICE);
         List<ActivityManager.RunningServiceInfo> services = manager.getRunningServices(Integer.MAX_VALUE);
 
         for (ActivityManager.RunningServiceInfo info : services) {
