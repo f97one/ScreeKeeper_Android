@@ -16,13 +16,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <receiver
-            android:name=".BootReceiver">
+
+        <receiver android:name="net.formula97.android.screenkeeper.BootReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-        <service android:name=".SensorManagerService" />
+
+        <receiver android:name=".ScreenReceiver" />
+
+        <service android:name="net.formula97.android.screenkeeper.SensorManagerService" />
+
+        <receiver
+            android:name="net.formula97.android.screenkeeper.ScreenReceiver"
+            android:enabled="true"
+            android:exported="true" >
+        </receiver>
     </application>
 
 </manifest>
