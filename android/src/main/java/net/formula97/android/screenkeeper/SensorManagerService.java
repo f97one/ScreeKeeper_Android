@@ -7,6 +7,7 @@ import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -25,6 +26,16 @@ class SensorManagerService extends Service implements SensorEventListener {
     private SensorManager sensorManager;
     private boolean isMagSensor;
     private boolean isAccSensor;
+
+    public boolean isScreenOn() {
+        return isScreenOn;
+    }
+
+    public void setScreenOn(boolean isScreenOn) {
+        this.isScreenOn = isScreenOn;
+    }
+
+    boolean isScreenOn;
 
     /**
      * Return the communication channel to the service.  May return null if
@@ -116,6 +127,13 @@ class SensorManagerService extends Service implements SensorEventListener {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
         showNotification(true, pendingIntent);
 
+        // スクリーン点灯／消灯を検知するレシーバーを登録
+        final ScreenReceiver screenReceiver = new ScreenReceiver();
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+        this.registerReceiver(screenReceiver, filter);
+        filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+        this.registerReceiver(screenReceiver, filter);
+
         return START_STICKY_COMPATIBILITY;
     }
 
@@ -186,7 +204,14 @@ class SensorManagerService extends Service implements SensorEventListener {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-
+            final String action = intent.getAction();
+            if (Intent.ACTION_SCREEN_ON.equals(action)) {
+                // スクリーン点灯時
+                setScreenOn(true);
+            } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
+                // スクリーン消灯時
+                setScreenOn(false);
+            }
         }
     }
 }
