@@ -90,8 +90,7 @@ public class MainActivity extends Activity {
         for (ActivityManager.RunningServiceInfo info : services) {
             if (svcname.equals(info.service.getClassName())) {
                 ret = true;
-            } else {
-                ret = false;
+                break;
             }
         }
 
