@@ -14,6 +14,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 
 import java.util.List;
 
@@ -33,6 +34,9 @@ class SensorManagerService extends Service implements SensorEventListener {
 
     public void setScreenOn(boolean isScreenOn) {
         this.isScreenOn = isScreenOn;
+
+        String onoff = isScreenOn ? "ON" : "OFF";
+        Log.d("SensorManagerService#setScreenOn()", "Received Intent.ACTION_SCREEN_" + onoff);
     }
 
     boolean isScreenOn;
