@@ -19,8 +19,6 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 	private TextView tv_currentMinPitch;
 	private TextView tv_currentMaxPitch;
 
-	private final int MAX_PITCH_OFFSET = 45;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,7 +38,7 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 
         // チェックボックスにPreferenceの値を反映する
         SharedPreferences pref = getPref();
-        cb_startUp.setChecked(pref.getBoolean("StartAfterBoot", false));
+        cb_startUp.setChecked(pref.getBoolean(Consts.Prefs.NAME, false));
 
         final SvcUtil util = new SvcUtil(getApplicationContext());
         final String keeper = SensorManagerService.class.getCanonicalName();
@@ -57,24 +55,25 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 		sb_maximumPitch.setOnSeekBarChangeListener(this);
 
 		// SeekBarの値を復元
-		onProgressChanged(sb_minimumPitch, pref.getInt("MinimumPitch", 5), false);
-		onProgressChanged(sb_maximumPitch, pref.getInt("MaximumPitch", 35), false);
+		onProgressChanged(sb_minimumPitch, pref.getInt(Consts.Prefs.MINIMUM_PITCH, 5), false);
+		onProgressChanged(sb_maximumPitch, pref.getInt(Consts.Prefs.MAXIMUM_PITCH, 35), false);
 
         // ボタンを押した時の処理
         //   ボタンがひとつしかないので無名関数にする
         btn_startStopManually.setOnClickListener(new View.OnClickListener() {
-            final Intent intent = new Intent(getApplicationContext(), SensorManagerService.class);
-            @Override
-            public void onClick(View v) {
-                if (util.isKeeperRunning(keeper)) {
-                    startService(intent);
-                    btn_startStopManually.setText(R.string.stop_manually);
-                } else {
-                    stopService(intent);
-                    btn_startStopManually.setText(R.string.start_manually);
-                }
-            }
-        });
+			final Intent intent = new Intent(getApplicationContext(), SensorManagerService.class);
+
+			@Override
+			public void onClick(View v) {
+				if (util.isKeeperRunning(keeper)) {
+					startService(intent);
+					btn_startStopManually.setText(R.string.stop_manually);
+				} else {
+					stopService(intent);
+					btn_startStopManually.setText(R.string.start_manually);
+				}
+			}
+		});
     }
 
     @Override
@@ -83,8 +82,11 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 
         // チェックボックスの値をPreferenceに反映する
         SharedPreferences.Editor editor = getPref().edit();
-        editor.putBoolean("StartAfterBoot", cb_startUp.isChecked());
+        editor.putBoolean(Consts.Prefs.START_AFTER_BOOT, cb_startUp.isChecked());
         editor.commit();
+
+		// SeekBarの値をPreferenceに反映する
+
     }
 
     /**
@@ -92,7 +94,7 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
      * @return SharedPreferences型、プリファレンスのインスタンス
      */
     private SharedPreferences getPref() {
-        return getSharedPreferences("ScreenKeeper_pref", MODE_PRIVATE);
+        return getSharedPreferences(Consts.Prefs.NAME, MODE_PRIVATE);
     }
 
 	@Override
@@ -103,7 +105,7 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 				break;
 			case R.id.sb_maximumPitch:
 				// SeekBarの現在値に45を加える
-				tv_currentMaxPitch.setText(String.valueOf(progress + MAX_PITCH_OFFSET));
+				tv_currentMaxPitch.setText(String.valueOf(progress + Consts.Prefs.MAX_PITCH_OFFSET));
 				break;
 		}
 	}
