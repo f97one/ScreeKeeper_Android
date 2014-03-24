@@ -86,12 +86,15 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 
         // チェックボックスの値をPreferenceに反映する
         SharedPreferences.Editor editor = getPref().edit();
+
         editor.putBoolean(Consts.Prefs.START_AFTER_BOOT, cb_startUp.isChecked());
-        editor.commit();
 
 		// SeekBarの値をPreferenceに反映する
+		editor.putInt(Consts.Prefs.MINIMUM_PITCH, sb_minimumPitch.getProgress());
+		editor.putInt(Consts.Prefs.MAXIMUM_PITCH, sb_maximumPitch.getProgress());
 
-    }
+		editor.commit();
+	}
 
     /**
      * SharedPreferencesを取得する。
