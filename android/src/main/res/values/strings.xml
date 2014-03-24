@@ -8,5 +8,7 @@
     <string name="activate_on_startup">Activate me on Startup</string>
     <string name="start_manually">Start Manually</string>
     <string name="stop_manually">Stop Manually</string>
+	<string name="minimum_pitch">Minimum pitch</string>
+	<string name="maximum_pitch">Maximum pitch</string>
 
 </resources>
