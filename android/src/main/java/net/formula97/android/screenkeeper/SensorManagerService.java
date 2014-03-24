@@ -182,9 +182,10 @@ class SensorManagerService extends Service implements SensorEventListener {
         final double RAD2DEG = 180 / Math.PI;
 
         // Preferenceの最小角度と最大角度を取得する
-        SharedPreferences pref = getSharedPreferences("ScreenKeeper_pref", MODE_PRIVATE);
-        int minPitch = pref.getInt("MinimumPitch", 5);
-        int maxPitch = pref.getInt("MaximumPitch", 80);
+        SharedPreferences pref = getSharedPreferences(Consts.Prefs.NAME, MODE_PRIVATE);
+        int minPitch = pref.getInt(Consts.Prefs.MINIMUM_PITCH, Consts.Prefs.DEFAULT_MIN_PITCH);
+        int maxPitch = pref.getInt(Consts.Prefs.MAXIMUM_PITCH, Consts.Prefs.DEFAULT_MAX_PITCH)
+				+ Consts.Prefs.MAX_PITCH_OFFSET;
 
         // 実際のコールバックに対する処理
         switch (event.sensor.getType()) {
