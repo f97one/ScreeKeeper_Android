@@ -7,11 +7,19 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeListener {
 
     private CheckBox cb_startUp;
     private Button btn_startStopManually;
+	private SeekBar sb_minimumPitch;
+	private SeekBar sb_maximumPitch;
+	private TextView tv_currentMinPitch;
+	private TextView tv_currentMaxPitch;
+
+	private final int MAX_PITCH_OFFSET = 45;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,6 +28,10 @@ public class MainActivity extends Activity {
 
         cb_startUp = (CheckBox) findViewById(R.id.cb_startup);
         btn_startStopManually = (Button) findViewById(R.id.btn_startStopManually);
+		sb_minimumPitch = (SeekBar) findViewById(R.id.sb_minimumPitch);
+		sb_maximumPitch = (SeekBar) findViewById(R.id.sb_maximumPitch);
+		tv_currentMinPitch = (TextView) findViewById(R.id.tv_currentMinPitch);
+		tv_currentMaxPitch = (TextView) findViewById(R.id.tv_currentMaxPitch);
     }
 
     @Override
@@ -39,6 +51,10 @@ public class MainActivity extends Activity {
         } else {
             btn_startStopManually.setText(R.string.stop_manually);
         }
+
+		// SeekBarにリスナーを設置
+		sb_minimumPitch.setOnSeekBarChangeListener(this);
+		sb_maximumPitch.setOnSeekBarChangeListener(this);
 
         // ボタンを押した時の処理
         //   ボタンがひとつしかないので無名関数にする
@@ -75,4 +91,26 @@ public class MainActivity extends Activity {
         return getSharedPreferences("ScreenKeeper_pref", MODE_PRIVATE);
     }
 
+	@Override
+	public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+		switch (seekBar.getId()) {
+			case R.id.sb_minimumPitch:
+				tv_currentMinPitch.setText(String.valueOf(progress));
+				break;
+			case R.id.sb_maximumPitch:
+				// SeekBarの現在値に45を加える
+				tv_currentMaxPitch.setText(String.valueOf(progress + MAX_PITCH_OFFSET));
+				break;
+		}
+	}
+
+	@Override
+	public void onStartTrackingTouch(SeekBar seekBar) {
+
+	}
+
+	@Override
+	public void onStopTrackingTouch(SeekBar seekBar) {
+
+	}
 }
