@@ -10,5 +10,7 @@ class Consts {
 		static final String MINIMUM_PITCH = "MinimumPitch";
 		static final String MAXIMUM_PITCH = "MaximumPitch";
 		static final int MAX_PITCH_OFFSET = 45;
+		static final int DEFAULT_MAX_PITCH = 35;
+		static final int DEFAULT_MIN_PITCH = 5;
 	}
 }
