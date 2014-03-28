@@ -24,8 +24,7 @@ public class BootReceiver extends BroadcastReceiver {
 
         // スタートアップ起動を、StartAfterBootがtrueの場合だけに限定する
         if (preference.getBoolean(Consts.Prefs.START_AFTER_BOOT, false)) {
-            String action = intent.getAction();
-            if (action.equals(Intent.ACTION_BOOT_COMPLETED)) {
+            if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
                 context.startService(new Intent(context, SensorManagerService.class));
             }
         }
