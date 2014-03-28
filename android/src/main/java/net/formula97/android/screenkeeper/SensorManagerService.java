@@ -201,12 +201,14 @@ public class SensorManagerService extends Service implements SensorEventListener
             SensorManager.getRotationMatrix(rotationMatrix, null, accValues, geoMatrix);
             SensorManager.getOrientation(rotationMatrix, attitude);
 
-            // 現在のピッチがPreferenceの設定値以内の場合は、
+            // 現在のピッチがPreferenceの設定値以内の場合は、端末のスリープ設定を解除する
             int currentPitch = (int)(attitude[1] * RAD2DEG);
             if (currentPitch >= minPitch && currentPitch <= maxPitch) {
                 if (isScreenOn()) {
-                    // ToDo: スリープ無効の処理を書く
+                    disableSleep();
                 }
+            } else {
+                enableIntoSleep();
             }
         }
     }
@@ -222,6 +224,20 @@ public class SensorManagerService extends Service implements SensorEventListener
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
+    }
+
+    /**
+     * 端末のスリープを無効にする。
+     */
+    void disableSleep() {
+        // ToDo 詳細処理を実装する
+    }
+
+    /**
+     * 無効にしたスリープ無効設定を解除する。
+     */
+    void enableIntoSleep() {
+        // ToDo 詳細処理を実装する
     }
 
     /**
