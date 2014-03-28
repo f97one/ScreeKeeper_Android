@@ -1,5 +1,12 @@
 apply plugin: 'android'
 
+sourceSets {
+    unitTest {
+        java.srcDir file('src/androidTest/java')
+        resources.srcDir file('src/androidTest/res')
+    }
+}
+
 android {
     compileSdkVersion 19
     buildToolsVersion "19.0.3"
@@ -13,6 +20,11 @@ android {
         targetSdkVersion 19
         versionCode 1
         versionName "1.0"
+
+        testPackageName "net.formula97.android.screenkeeper.test"
+        testInstrumentationRunner "android.test.InstrumentationTestRunner"
+        //testHandlingProfiling true
+        testFunctionalTest true
     }
 
     compileOptions {
