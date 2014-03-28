@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Created by HAJIME on 14/03/14.
  */
-class SensorManagerService extends Service implements SensorEventListener {
+public class SensorManagerService extends Service implements SensorEventListener {
 
     private Handler mHandler;
     private SensorManager sensorManager;
