@@ -55,12 +55,14 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 		sb_maximumPitch.setOnSeekBarChangeListener(this);
 
 		// SeekBarの値を復元
-		onProgressChanged(sb_minimumPitch,
-				pref.getInt(Consts.Prefs.MINIMUM_PITCH, Consts.Prefs.DEFAULT_MIN_PITCH),
-				false);
-		onProgressChanged(sb_maximumPitch,
-				pref.getInt(Consts.Prefs.MAXIMUM_PITCH, Consts.Prefs.DEFAULT_MAX_PITCH),
-				false);
+		int currentMinProgress = pref.getInt(Consts.Prefs.MINIMUM_PITCH, Consts.Prefs.DEFAULT_MIN_PITCH);
+		int currentMaxProgress = pref.getInt(Consts.Prefs.MAXIMUM_PITCH, Consts.Prefs.DEFAULT_MAX_PITCH);
+
+		sb_minimumPitch.setProgress(currentMinProgress);
+		sb_maximumPitch.setProgress(currentMaxProgress);
+
+		onProgressChanged(sb_minimumPitch, currentMinProgress, false);
+		onProgressChanged(sb_maximumPitch, currentMaxProgress, false);
 
         // ボタンを押した時の処理
         //   ボタンがひとつしかないので無名関数にする
