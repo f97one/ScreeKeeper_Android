@@ -38,7 +38,7 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 
         // チェックボックスにPreferenceの値を反映する
         SharedPreferences pref = getPref();
-        cb_startUp.setChecked(pref.getBoolean(Consts.Prefs.NAME, false));
+        cb_startUp.setChecked(pref.getBoolean(Consts.Prefs.START_AFTER_BOOT, false));
 
         final SvcUtil util = new SvcUtil(getApplicationContext());
         final String keeper = SensorManagerService.class.getCanonicalName();
