@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Created by HAJIME on 14/03/14.
  */
-class SensorManagerService extends Service implements SensorEventListener {
+public class SensorManagerService extends Service implements SensorEventListener {
 
     private Handler mHandler;
     private SensorManager sensorManager;
@@ -208,6 +208,12 @@ class SensorManagerService extends Service implements SensorEventListener {
                     // ToDo: スリープ無効の処理を書く
                 }
             }
+
+			// 現在の傾きセンサー値を表示
+			Log.d("onSensorChanged", "Current Azimuth=" + String.valueOf((int)(attitude[0] * RAD2DEG))
+			+ ", Pitch=" + String.valueOf(currentPitch)
+			+ ", Roll=" + String.valueOf((int)(attitude[2] * RAD2DEG)));
+
         }
     }
 
