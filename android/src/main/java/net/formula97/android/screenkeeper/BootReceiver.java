@@ -20,12 +20,11 @@ public class BootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         // Preferenceの値を参照する
-        SharedPreferences preference = context.getSharedPreferences("ScreenKeeperPreference", Context.MODE_PRIVATE);
+        SharedPreferences preference = context.getSharedPreferences(Consts.Prefs.NAME, Context.MODE_PRIVATE);
 
         // スタートアップ起動を、StartAfterBootがtrueの場合だけに限定する
-        if (preference.getBoolean("StartAfterBoot", false)) {
-            String action = intent.getAction();
-            if (action.equals(Intent.ACTION_BOOT_COMPLETED)) {
+        if (preference.getBoolean(Consts.Prefs.START_AFTER_BOOT, false)) {
+            if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
                 context.startService(new Intent(context, SensorManagerService.class));
             }
         }
