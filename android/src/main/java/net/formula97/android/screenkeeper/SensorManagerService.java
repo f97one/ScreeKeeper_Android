@@ -251,6 +251,13 @@ public class SensorManagerService extends Service implements SensorEventListener
      */
     private class ScreenReceiver extends BroadcastReceiver {
 
+		/**
+		 * 継承されたonReceived。<br />
+		 * スクリーンの点灯状況に応じ、点灯状況を保持するフィールドを更新する。
+		 *
+		 * @param context
+		 * @param intent
+		 */
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
