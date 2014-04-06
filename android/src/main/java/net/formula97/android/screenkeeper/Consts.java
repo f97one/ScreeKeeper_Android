@@ -13,4 +13,6 @@ class Consts {
 		static final int DEFAULT_MAX_PITCH = 35;
 		static final int DEFAULT_MIN_PITCH = 5;
 	}
+
+	static final String WAKE_LOCK_TAG = "net.formula97.android.screenkeeper.ACTION_SCREEN_KEEP";
 }
