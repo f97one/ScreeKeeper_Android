@@ -15,6 +15,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 import java.util.List;
@@ -43,6 +44,14 @@ public class SensorManagerService extends Service implements SensorEventListener
 
     boolean isScreenOn;
 
+	/**
+	 * 継承されたonBind。
+	 *
+	 * @param intent
+	 * @return
+	 * @see android.app.Service#onBind(android.content.Intent)
+	 */
+	@Override
     public IBinder onBind(Intent intent) {
         return null;
     }
@@ -84,6 +93,7 @@ public class SensorManagerService extends Service implements SensorEventListener
      * use for the service's current started state.  It may be one of the
      * constants associated with the {@link #START_CONTINUATION_MASK} bits.
      * @see #stopSelfResult(int)
+	 * @see android.app.Service#onStartCommand(android.content.Intent, int, int)
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -128,6 +138,8 @@ public class SensorManagerService extends Service implements SensorEventListener
      * service should clean up any resources it holds (threads, registered
      * receivers, etc) at this point.  Upon return, there will be no more calls
      * in to this Service object and it is effectively dead.  Do not call this method directly.
+	 *
+	 * @see android.app.Service#onDestroy()
      */
     @Override
     public void onDestroy() {
@@ -143,6 +155,12 @@ public class SensorManagerService extends Service implements SensorEventListener
         this.unregisterReceiver(screenReceiver);
     }
 
+	/**
+	 * 通知領域にアイコンと現在の状態を表示する。
+	 *
+	 * @param isAvailable boolean型、現在WAKE_LOCKが有効ならtrue、無効ならfalseをセットする
+	 * @param intent PendingIntent型、
+	 */
     void showNotification(boolean isAvailable, PendingIntent intent) {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
@@ -170,6 +188,7 @@ public class SensorManagerService extends Service implements SensorEventListener
      * the framework.
      *
      * @param event the {@link android.hardware.SensorEvent SensorEvent}.
+	 * @see android.hardware.SensorEventListener#onSensorChanged(android.hardware.SensorEvent)
      */
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -226,6 +245,7 @@ public class SensorManagerService extends Service implements SensorEventListener
      *
      * @param sensor
      * @param accuracy The new accuracy of this sensor
+	 * @see android.hardware.SensorEventListener#onAccuracyChanged(android.hardware.Sensor, int)
      */
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -237,14 +257,37 @@ public class SensorManagerService extends Service implements SensorEventListener
      */
     void disableSleep() {
         // ToDo 詳細処理を実装する
+		if (isScreenOn()) {
+			PowerManager.WakeLock lock = getWakeLockState();
+			lock.acquire();
+			Log.d(this.getClass().getName(), "Screen Lock acquired.");
+		}
     }
 
-    /**
+	/**
+	 * WAKE_LOCKの操作権利を取得する。<br />
+	 * @return PowerManager.WakeLock型、新規のWAKE_LOCK
+	 */
+	private PowerManager.WakeLock getWakeLockState() {
+		PowerManager powerManager = (PowerManager)getSystemService(POWER_SERVICE);
+		return powerManager.newWakeLock(
+				PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
+				Consts.WAKE_LOCK_TAG);
+	}
+
+	/**
      * 無効にしたスリープ無効設定を解除する。
      */
     void enableIntoSleep() {
         // ToDo 詳細処理を実装する
-    }
+		PowerManager.WakeLock lock = getWakeLockState();
+		if (lock.isHeld()) {
+			lock.release();
+			Log.d(this.getClass().getName(), "Screen Lock released.");
+		} else {
+			Log.d(this.getClass().getName(), "Screen Lock has already released.");
+		}
+	}
 
     /**
      * スクリーンの点灯／消灯を検知するBroadcastReceiver。
@@ -257,6 +300,7 @@ public class SensorManagerService extends Service implements SensorEventListener
 		 *
 		 * @param context
 		 * @param intent
+		 * @see android.content.BroadcastReceiver#onReceive(android.content.Context, android.content.Intent)
 		 */
         @Override
         public void onReceive(Context context, Intent intent) {
