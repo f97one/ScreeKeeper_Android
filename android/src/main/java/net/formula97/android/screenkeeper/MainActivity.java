@@ -18,6 +18,8 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 	private SeekBar sb_maximumPitch;
 	private TextView tv_currentMinPitch;
 	private TextView tv_currentMaxPitch;
+	private SeekBar sb_acquireTimeout;
+	private TextView tv_acquire_timeout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +32,8 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 		sb_maximumPitch = (SeekBar) findViewById(R.id.sb_maximumPitch);
 		tv_currentMinPitch = (TextView) findViewById(R.id.tv_currentMinPitch);
 		tv_currentMaxPitch = (TextView) findViewById(R.id.tv_currentMaxPitch);
+		sb_acquireTimeout = (SeekBar) findViewById(R.id.sb_acquireTimeout);
+		tv_acquire_timeout = (TextView) findViewById(R.id.tv_acquire_timeout);
     }
 
     @Override
@@ -53,16 +57,20 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 		// SeekBarにリスナーを設置
 		sb_minimumPitch.setOnSeekBarChangeListener(this);
 		sb_maximumPitch.setOnSeekBarChangeListener(this);
+		sb_acquireTimeout.setOnSeekBarChangeListener(this);
 
 		// SeekBarの値を復元
 		int currentMinProgress = pref.getInt(Consts.Prefs.MINIMUM_PITCH, Consts.Prefs.DEFAULT_MIN_PITCH);
 		int currentMaxProgress = pref.getInt(Consts.Prefs.MAXIMUM_PITCH, Consts.Prefs.DEFAULT_MAX_PITCH);
+		int currentAcquireTimeout = pref.getInt(Consts.Prefs.ACQUIRE_TIMEOUT, Consts.Prefs.DEFAULT_ACQUIRE_TIMEOUT);
 
 		sb_minimumPitch.setProgress(currentMinProgress);
 		sb_maximumPitch.setProgress(currentMaxProgress);
+		sb_acquireTimeout.setProgress(currentAcquireTimeout);
 
 		onProgressChanged(sb_minimumPitch, currentMinProgress, false);
 		onProgressChanged(sb_maximumPitch, currentMaxProgress, false);
+		onProgressChanged(sb_acquireTimeout, currentAcquireTimeout, false);
 
         // ボタンを押した時の処理
         //   ボタンがひとつしかないので無名関数にする
@@ -94,6 +102,7 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 		// SeekBarの値をPreferenceに反映する
 		editor.putInt(Consts.Prefs.MINIMUM_PITCH, sb_minimumPitch.getProgress());
 		editor.putInt(Consts.Prefs.MAXIMUM_PITCH, sb_maximumPitch.getProgress());
+		editor.putInt(Consts.Prefs.ACQUIRE_TIMEOUT, sb_acquireTimeout.getProgress());
 
 		editor.commit();
 	}
@@ -116,6 +125,15 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 				// SeekBarの現在値に45を加える
 				tv_currentMaxPitch.setText(String.valueOf(progress + Consts.Prefs.MAX_PITCH_OFFSET));
 				break;
+			case R.id.sb_acquireTimeout:
+				// 値が0なら「No Timeout」と表示する
+				if (sb_acquireTimeout.getProgress() == 0) {
+					tv_acquire_timeout.setText(getString(R.string.no_timeout));
+				} else {
+					String tag = String.valueOf(sb_acquireTimeout.getProgress())
+							+ getString(R.string.seconds);
+					tv_acquire_timeout.setText(tag);
+				}
 		}
 	}
 
