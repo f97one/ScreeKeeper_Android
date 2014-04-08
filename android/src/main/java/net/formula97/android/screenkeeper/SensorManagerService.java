@@ -256,11 +256,17 @@ public class SensorManagerService extends Service implements SensorEventListener
      * 端末のスリープを無効にする。
      */
     void disableSleep() {
+		SharedPreferences pref = getSharedPreferences(Consts.Prefs.NAME, MODE_PRIVATE);
+		int timeout = pref.getInt(Consts.Prefs.ACQUIRE_TIMEOUT, Consts.Prefs.DEFAULT_ACQUIRE_TIMEOUT) * 1000;
         // ToDo 詳細処理を実装する
 		if (isScreenOn()) {
 			PowerManager.WakeLock lock = getWakeLockState();
-			lock.acquire();
-			Log.d(this.getClass().getName(), "Screen Lock acquired.");
+			if (timeout != 0) {
+				lock.acquire(timeout);
+			} else {
+				lock.acquire();
+			}
+			Log.d(this.getClass().getName(), "Screen Lock acquired, timeout = " + String.valueOf(timeout) + "ms.");
 		}
     }
 
