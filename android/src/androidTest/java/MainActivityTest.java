@@ -10,11 +10,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         super(activityClass);
     }
 
+	@Override
     public void setUp() throws Exception {
         super.setUp();
 
     }
 
+	@Override
     public void tearDown() throws Exception {
 
     }
