@@ -10,5 +10,9 @@
     <string name="stop_manually">Stop Manually</string>
 	<string name="minimum_pitch">Minimum pitch</string>
 	<string name="maximum_pitch">Maximum pitch</string>
+	<string name="seconds">sec.</string>
+	<string name="degree">deg.</string>
+	<string name="keep_timeout">Timeout</string>
+	<string name="no_timeout">No Timeout</string>
 
 </resources>
