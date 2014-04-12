@@ -49,9 +49,9 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 
         // サービスの実行状況に応じて、ボタンのキャプションを変更する
         if (util.isKeeperRunning(keeper)) {
-            btn_startStopManually.setText(R.string.start_manually);
-        } else {
             btn_startStopManually.setText(R.string.stop_manually);
+        } else {
+            btn_startStopManually.setText(R.string.start_manually);
         }
 
 		// SeekBarにリスナーを設置
@@ -80,10 +80,10 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 			@Override
 			public void onClick(View v) {
 				if (util.isKeeperRunning(keeper)) {
-					startService(intent);
+					stopService(intent);
 					btn_startStopManually.setText(R.string.stop_manually);
 				} else {
-					stopService(intent);
+					startService(intent);
 					btn_startStopManually.setText(R.string.start_manually);
 				}
 			}
@@ -105,6 +105,15 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 		editor.putInt(Consts.Prefs.ACQUIRE_TIMEOUT, sb_acquireTimeout.getProgress());
 
 		editor.commit();
+
+		// すでにサービスが稼働していたら、立ち上げ直す
+		SvcUtil util = new SvcUtil(getApplicationContext());
+		String keeper = SensorManagerService.class.getCanonicalName();
+		if (util.isKeeperRunning(keeper)) {
+			Intent i = new Intent(getApplicationContext(), SensorManagerService.class);
+			stopService(i);
+			startService(i);
+		}
 	}
 
     /**
