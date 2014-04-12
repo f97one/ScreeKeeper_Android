@@ -126,9 +126,12 @@ public class SensorManagerService extends Service implements SensorEventListener
         //   AndroidManifest.xmlに書く方法では、ブロードキャストがキャッチできないので、プログラムで
         //   動的にフィルタとレシーバーを登録する。
         IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+		filter.addAction(Intent.ACTION_SCREEN_OFF);
         this.registerReceiver(screenReceiver, filter);
-        filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
-        this.registerReceiver(screenReceiver, filter);
+
+		// サービス稼働時のスクリーン点灯状況を保存
+		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		setScreenOn(pm.isScreenOn());
 
         return START_STICKY_COMPATIBILITY;
     }
@@ -234,6 +237,9 @@ public class SensorManagerService extends Service implements SensorEventListener
 			Log.d("onSensorChanged", "Current Azimuth=" + String.valueOf((int)(attitude[0] * RAD2DEG))
 			+ ", Pitch=" + String.valueOf(currentPitch)
 			+ ", Roll=" + String.valueOf((int)(attitude[2] * RAD2DEG)));
+			Log.d("onSensorChanged", "raw values = {" + String.valueOf(attitude[0] * RAD2DEG) + "/"
+					+ String.valueOf(attitude[1] * RAD2DEG) + "/"
+					+ String.valueOf(attitude[2] * RAD2DEG) + "}");
 
         }
     }
