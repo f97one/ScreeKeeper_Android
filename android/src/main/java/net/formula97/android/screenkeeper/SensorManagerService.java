@@ -275,7 +275,9 @@ public class SensorManagerService extends Service implements SensorEventListener
         // 加速度と地磁気の配列
         float[] gravity = new float[3];
         float[] magnetic = new float[3];
-        float[] rotationMatrix = new float[9];
+		float[] inclinationMatrix = new float[16];
+        float[] rotationMatrix = new float[16];
+		float[] remappedRotation = new float[16];
         float[] attitude = new float[3];
 
         final double RAD2DEG = 180 / Math.PI;
@@ -298,17 +300,28 @@ public class SensorManagerService extends Service implements SensorEventListener
 
         if (magnetic != null && gravity != null) {
 			// ToDo 計算に失敗する理由を調査する
-			boolean result = SensorManager.getRotationMatrix(rotationMatrix, null, gravity, magnetic);
+			boolean result = SensorManager.getRotationMatrix(
+					rotationMatrix,
+					inclinationMatrix,
+					gravity,
+					magnetic);
 			if (result) {
 				Log.v("onSensorChanged", "calculate succeeded.");
 			} else {
 				Log.w("onSensorChanged", "calculate failed.");
 			}
 
-            SensorManager.getOrientation(rotationMatrix, attitude);
+			SensorManager.remapCoordinateSystem(rotationMatrix,
+					SensorManager.AXIS_X,
+					SensorManager.AXIS_Z,
+					remappedRotation);
+            SensorManager.getOrientation(remappedRotation, attitude);
 
             // 現在のピッチがPreferenceの設定値以内の場合は、端末のスリープ設定を解除する
-            int currentPitch = (int)(attitude[1] * RAD2DEG);
+			int currentAzimuth = (int) Math.floor(Math.toDegrees(attitude[0]));
+            int currentPitch = (int) Math.floor(Math.toDegrees(attitude[1]));
+			int currentRoll = (int) Math.floor(Math.toDegrees(attitude[2]));
+
             if (currentPitch >= minPitch && currentPitch <= maxPitch) {
                 if (isScreenOn()) {
                     disableSleep();
@@ -318,12 +331,12 @@ public class SensorManagerService extends Service implements SensorEventListener
             }
 
 			// 現在の傾きセンサー値を表示
-			Log.d("onSensorChanged", "Current Azimuth=" + String.valueOf((int)(attitude[0] * RAD2DEG))
-			+ ", Pitch=" + String.valueOf(currentPitch)
-			+ ", Roll=" + String.valueOf((int)(attitude[2] * RAD2DEG)));
-			Log.d("onSensorChanged", "raw values = {" + String.valueOf(attitude[0] * RAD2DEG) + "/"
-					+ String.valueOf(attitude[1] * RAD2DEG) + "/"
-					+ String.valueOf(attitude[2] * RAD2DEG) + "}");
+			Log.d("onSensorChanged", "Current Azimuth=" + String.valueOf(currentAzimuth) +
+					", Pitch=" + String.valueOf(currentPitch) +
+					", Roll=" + String.valueOf(currentRoll) + "\n" +
+					"raw values = {" + String.valueOf(attitude[0]) + "/" +
+					String.valueOf(attitude[1]) + "/" +
+					String.valueOf(attitude[2]) + "}");
 
         }
     }
