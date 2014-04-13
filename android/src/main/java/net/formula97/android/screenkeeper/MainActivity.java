@@ -81,10 +81,10 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 			public void onClick(View v) {
 				if (util.isKeeperRunning(keeper)) {
 					stopService(intent);
-					btn_startStopManually.setText(R.string.stop_manually);
+					btn_startStopManually.setText(R.string.start_manually);
 				} else {
 					startService(intent);
-					btn_startStopManually.setText(R.string.start_manually);
+					btn_startStopManually.setText(R.string.stop_manually);
 				}
 			}
 		});
