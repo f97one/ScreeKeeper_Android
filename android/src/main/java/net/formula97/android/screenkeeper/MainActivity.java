@@ -105,15 +105,6 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 		editor.putInt(Consts.Prefs.ACQUIRE_TIMEOUT, sb_acquireTimeout.getProgress());
 
 		editor.commit();
-
-		// すでにサービスが稼働していたら、立ち上げ直す
-		SvcUtil util = new SvcUtil(getApplicationContext());
-		String keeper = SensorManagerService.class.getCanonicalName();
-		if (util.isKeeperRunning(keeper)) {
-			Intent i = new Intent(getApplicationContext(), SensorManagerService.class);
-			stopService(i);
-			startService(i);
-		}
 	}
 
     /**
