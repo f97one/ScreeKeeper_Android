@@ -2,7 +2,6 @@ package net.formula97.android.screenkeeper;
 
 import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -13,6 +12,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -25,16 +25,75 @@ import java.util.List;
  */
 public class SensorManagerService extends Service implements SensorEventListener {
 
+	public static final int NOTIFICATION_ID = 0x80869821;
+
     private Handler mHandler;
     private SensorManager sensorManager;
-    private boolean isMagSensor;
-    private boolean isAccSensor;
+
+	/**
+	 * 地磁気センサーの有効／無効の状態を取得する。
+	 *
+	 * @return boolean型、trueなら有効、falseなら無効。
+	 */
+	public boolean isMagSensorFlag() {
+		return magSensorFlag;
+	}
+
+	/**
+	 * 地磁気センサーの有効／無効を示すフラグを変更する。
+	 *
+	 * @param magSensorFlag boolean型、
+	 */
+	void setMagSensorFlag(boolean magSensorFlag) {
+		this.magSensorFlag = magSensorFlag;
+		Log.d("MagSensor", "System has Sensor.TYPE_MAGNETIC_FIELD.");
+	}
+
+	/**
+	 * 地磁気センサーの有効／無効を示すフラグ。
+	 */
+	private boolean magSensorFlag;
+
+	/**
+	 * 加速度センサーの状態を取得する。
+	 *
+	 * @return boolean型、有効ならtrue、無効ならfalseを返す。
+	 */
+	public boolean isAccSensorFlag() {
+		return accSensorFlag;
+	}
+
+	/**
+	 * 加速度センサーの有効／無効を示すフラグを変更する。
+	 *
+	 * @param accSensorFlag boolean型、有効ならtrueを、無効ならfalseをセットする
+	 */
+	void setAccSensorFlag(boolean accSensorFlag) {
+		this.accSensorFlag = accSensorFlag;
+		Log.d("AccSensor", "System has Sensor.TYPE_ACCELEROMETER.");
+	}
+
+	/**
+	 * 加速度センサーの有効／無効を示すフラグ。
+	 */
+	private boolean accSensorFlag;
+
     final ScreenReceiver screenReceiver = new ScreenReceiver();
 
+	/**
+	 * ディスプレイの点灯／消灯状態を取得する。
+	 *
+	 * @return boolean型、点灯中ならtrueを、消灯中ならfalseを返す。
+	 */
     public boolean isScreenOn() {
         return isScreenOn;
     }
 
+	/**
+	 * ディスプレイの点灯／消灯を示すフラグを変更する。
+	 *
+	 * @param isScreenOn boolean型、点灯ならtrueを、消灯ならfalseをセットする
+	 */
     public void setScreenOn(boolean isScreenOn) {
         this.isScreenOn = isScreenOn;
 
@@ -42,6 +101,9 @@ public class SensorManagerService extends Service implements SensorEventListener
         Log.d("SensorManagerService#setScreenOn()", "Received Intent.ACTION_SCREEN_" + onoff);
     }
 
+	/**
+	 * ディスプレイの点灯／消灯を保持するフラグ。
+	 */
     boolean isScreenOn;
 
 	/**
@@ -101,26 +163,24 @@ public class SensorManagerService extends Service implements SensorEventListener
 
         // 傾きセンサーの登録
         //     Sensor.TYPE_ORIENTATIONがAPI 8から非推奨になったので、加速度センサー(Sensor.TYPE_ACCELEROMETER)と
-        //   地磁気センサー(Sensor.TYPE_MAGNETIC_FIELD)を組み合わせて。角度を得る必要がある。
-        //     センサー感度は一般UI向け(SensorManager.SENSOR_DELAY_UI)にする。
+        //   地磁気センサー(Sensor.TYPE_MAGNETIC_FIELD)を組み合わせて、角度を得る必要がある。
+        //     センサー感度（＝遅延許容量）は、一般UI向け(SensorManager.SENSOR_DELAY_UI)にする。
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         List<Sensor> sensorList = sensorManager.getSensorList(Sensor.TYPE_ALL);
         for (Sensor sensor : sensorList) {
             // 加速度センサー(Sensor.TYPE_ACCELEROMETER)の登録
             if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-                sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI);
-                isMagSensor = true;
+                setAccSensorFlag(
+						sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI)
+				);
             }
             // 地磁気センサー(Sensor.TYPE_MAGNETIC_FIELD)の登録
             if (sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-                sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI);
-                isAccSensor = true;
+                setMagSensorFlag(
+						sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI)
+				);
             }
         }
-
-        mHandler = new Handler();
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
-        showNotification(true, pendingIntent);
 
         // スクリーン点灯／消灯を検知するレシーバーを登録
         //   AndroidManifest.xmlに書く方法では、ブロードキャストがキャッチできないので、プログラムで
@@ -148,35 +208,52 @@ public class SensorManagerService extends Service implements SensorEventListener
     public void onDestroy() {
         super.onDestroy();
 
-        if (isAccSensor || isMagSensor) {
+        if (accSensorFlag || magSensorFlag) {
             sensorManager.unregisterListener(this);
-            isMagSensor = false;
-            isAccSensor = false;
+            setAccSensorFlag(false);
+            setMagSensorFlag(false);
         }
 
         // スクリーンの点灯／消灯を検知するレシーバーの削除
         this.unregisterReceiver(screenReceiver);
+		dismissNotification();
     }
 
 	/**
 	 * 通知領域にアイコンと現在の状態を表示する。
 	 *
 	 * @param isAvailable boolean型、現在WAKE_LOCKが有効ならtrue、無効ならfalseをセットする
-	 * @param intent PendingIntent型、
 	 */
-    void showNotification(boolean isAvailable, PendingIntent intent) {
+	@SuppressWarnings("deprecated")
+    void showNotification(boolean isAvailable) {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         Notification.Builder builder = new Notification.Builder(getApplicationContext());
         builder.setContentTitle(getString(R.string.app_name))
                 .setSmallIcon(R.drawable.ic_launcher);
+		builder.setOngoing(true);
 
         if (isAvailable) {
             builder.setContentText(getString(R.string.activated));
         } else {
             builder.setContentText(getString(R.string.not_activated));
         }
+
+		// API 16以上だと表示のためのメソッドが変わっているので、それに対応させる。
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+			nm.notify(NOTIFICATION_ID, builder.getNotification());
+		} else {
+			nm.notify(NOTIFICATION_ID, builder.build());
+		}
     }
+
+	/**
+	 * 通知領域の表示を消去する。
+	 */
+	void dismissNotification() {
+		NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		nm.cancel(NOTIFICATION_ID);
+	}
 
     /**
      * Called when sensor values have changed.
@@ -196,8 +273,8 @@ public class SensorManagerService extends Service implements SensorEventListener
     @Override
     public void onSensorChanged(SensorEvent event) {
         // 加速度と地磁気の配列
-        float[] accValues = new float[3];
-        float[] geoMatrix = new float[3];
+        float[] gravity = new float[3];
+        float[] magnetic = new float[3];
         float[] rotationMatrix = new float[9];
         float[] attitude = new float[3];
 
@@ -212,15 +289,22 @@ public class SensorManagerService extends Service implements SensorEventListener
         // 実際のコールバックに対する処理
         switch (event.sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
-                accValues = event.values.clone();
+                gravity = event.values.clone();
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
-                geoMatrix = event.values.clone();
+                magnetic = event.values.clone();
                 break;
         }
 
-        if (geoMatrix != null && accValues != null) {
-            SensorManager.getRotationMatrix(rotationMatrix, null, accValues, geoMatrix);
+        if (magnetic != null && gravity != null) {
+			// ToDo 計算に失敗する理由を調査する
+			boolean result = SensorManager.getRotationMatrix(rotationMatrix, null, gravity, magnetic);
+			if (result) {
+				Log.v("onSensorChanged", "calculate succeeded.");
+			} else {
+				Log.w("onSensorChanged", "calculate failed.");
+			}
+
             SensorManager.getOrientation(rotationMatrix, attitude);
 
             // 現在のピッチがPreferenceの設定値以内の場合は、端末のスリープ設定を解除する
@@ -272,6 +356,7 @@ public class SensorManagerService extends Service implements SensorEventListener
 			} else {
 				lock.acquire();
 			}
+			showNotification(true);
 			Log.d(this.getClass().getName(), "Screen Lock acquired, timeout = " + String.valueOf(timeout) + "ms.");
 		}
     }
@@ -299,6 +384,7 @@ public class SensorManagerService extends Service implements SensorEventListener
 		} else {
 			Log.d(this.getClass().getName(), "Screen Lock has already released.");
 		}
+		showNotification(false);
 	}
 
     /**
