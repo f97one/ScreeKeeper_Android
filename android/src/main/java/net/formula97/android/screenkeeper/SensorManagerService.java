@@ -6,7 +6,6 @@ import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -244,9 +243,9 @@ public class SensorManagerService extends Service implements SensorEventListener
         // スクリーン点灯／消灯を検知するレシーバーを登録
         //   AndroidManifest.xmlに書く方法では、ブロードキャストがキャッチできないので、プログラムで
         //   動的にフィルタとレシーバーを登録する。
-        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
-		filter.addAction(Intent.ACTION_SCREEN_OFF);
-        this.registerReceiver(screenReceiver, filter);
+//        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+//		filter.addAction(Intent.ACTION_SCREEN_OFF);
+//        this.registerReceiver(screenReceiver, filter);
 
 		// サービス稼働時のスクリーン点灯状況を保存
 		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -255,7 +254,7 @@ public class SensorManagerService extends Service implements SensorEventListener
 		// 最初にWAKE_LOCKのステートを取得しておく
 		lock = getWakeLockState();
 
-        return START_STICKY_COMPATIBILITY;
+        return START_REDELIVER_INTENT;
     }
 
     /**
@@ -277,7 +276,7 @@ public class SensorManagerService extends Service implements SensorEventListener
         }
 
         // スクリーンの点灯／消灯を検知するレシーバーの削除
-        this.unregisterReceiver(screenReceiver);
+//        this.unregisterReceiver(screenReceiver);
 		dismissNotification();
     }
 
@@ -376,9 +375,9 @@ public class SensorManagerService extends Service implements SensorEventListener
 			int currentRoll = (int) Math.floor(Math.toDegrees(getAttitude()[2]));
 
             if (currentPitch >= minPitch && currentPitch <= maxPitch) {
-                if (isScreenOn()) {
+//                if (isScreenOn()) {
                     disableSleep();
-                }
+//                }
             } else {
                 enableIntoSleep();
             }
@@ -416,25 +415,31 @@ public class SensorManagerService extends Service implements SensorEventListener
 		SharedPreferences pref = getSharedPreferences(Consts.Prefs.NAME, MODE_PRIVATE);
 		int timeout = pref.getInt(Consts.Prefs.ACQUIRE_TIMEOUT, Consts.Prefs.DEFAULT_ACQUIRE_TIMEOUT) * 1000;
 
-		// スクリーン点灯時のみ処理
-		if (isScreenOn()) {
-			//lock = getWakeLockState();
+		//lock = getWakeLockState();
 
-			// WAKE_LOCKを取得していない時だけ取得する
-			if (!lock.isHeld()) {
-				if (timeout != 0) {
-					lock.acquire(timeout);
-				} else {
-					lock.acquire();
-				}
-				showNotification(true);
-				if (BuildConfig.DEBUG) {
-					Log.d(this.getClass().getName(), "Screen Lock acquired, timeout = " + String.valueOf(timeout) + "ms.");
-				}
+		// WAKE_LOCKを取得していない時だけ取得する
+//		if (timeout == 0) {
+//			if (!lock.isHeld()) {
+//				lock.acquire();
+//			}
+//		} else {
+//			lock.acquire(timeout);
+//		}
+//		showNotification(true);
+
+		if (!lock.isHeld()) {
+			if (timeout != 0) {
+				lock.acquire(timeout);
 			} else {
-				if (BuildConfig.DEBUG) {
-					Log.i(this.getClass().getName(), "Screen lock is already held, Ignored.");
-				}
+				lock.acquire();
+			}
+			showNotification(true);
+			if (BuildConfig.DEBUG) {
+				Log.d(this.getClass().getName(), "Screen Lock acquired, timeout = " + String.valueOf(timeout) + "ms.");
+			}
+		} else {
+			if (BuildConfig.DEBUG) {
+				Log.i(this.getClass().getName(), "Screen lock is already held, Ignored.");
 			}
 		}
     }
@@ -446,7 +451,7 @@ public class SensorManagerService extends Service implements SensorEventListener
 	private PowerManager.WakeLock getWakeLockState() {
 		PowerManager powerManager = (PowerManager)getSystemService(POWER_SERVICE);
 		return powerManager.newWakeLock(
-				PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
+				PowerManager.FULL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE,
 				Consts.WAKE_LOCK_TAG);
 	}
 
