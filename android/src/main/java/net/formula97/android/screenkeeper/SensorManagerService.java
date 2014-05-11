@@ -2,10 +2,12 @@ package net.formula97.android.screenkeeper;
 
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -25,6 +27,7 @@ import java.util.List;
 public class SensorManagerService extends Service implements SensorEventListener {
 
 	public static final int NOTIFICATION_ID = 0x80869821;
+	final int ACTIVITY_REQUEST_CODE = 0x7fff8001;
 
     private Handler mHandler;
     private SensorManager sensorManager;
@@ -219,33 +222,14 @@ public class SensorManagerService extends Service implements SensorEventListener
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
 
-        // 傾きセンサーの登録
-        //     Sensor.TYPE_ORIENTATIONがAPI 8から非推奨になったので、加速度センサー(Sensor.TYPE_ACCELEROMETER)と
-        //   地磁気センサー(Sensor.TYPE_MAGNETIC_FIELD)を組み合わせて、角度を得る必要がある。
-        //     センサー感度（＝遅延許容量）は、一般UI向け(SensorManager.SENSOR_DELAY_UI)にする。
-        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        List<Sensor> sensorList = sensorManager.getSensorList(Sensor.TYPE_ALL);
-        for (Sensor sensor : sensorList) {
-            // 加速度センサー(Sensor.TYPE_ACCELEROMETER)の登録
-            if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-                setAccSensorFlag(
-						sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
-				);
-            }
-            // 地磁気センサー(Sensor.TYPE_MAGNETIC_FIELD)の登録
-            if (sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-                setMagSensorFlag(
-						sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
-				);
-            }
-        }
+		initializeSensors();
 
-        // スクリーン点灯／消灯を検知するレシーバーを登録
+		// スクリーン点灯／消灯を検知するレシーバーを登録
         //   AndroidManifest.xmlに書く方法では、ブロードキャストがキャッチできないので、プログラムで
         //   動的にフィルタとレシーバーを登録する。
-//        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
-//		filter.addAction(Intent.ACTION_SCREEN_OFF);
-//        this.registerReceiver(screenReceiver, filter);
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+		filter.addAction(Intent.ACTION_SCREEN_OFF);
+        getApplicationContext().registerReceiver(screenReceiver, filter);
 
 		// サービス稼働時のスクリーン点灯状況を保存
 		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -257,7 +241,33 @@ public class SensorManagerService extends Service implements SensorEventListener
         return START_REDELIVER_INTENT;
     }
 
-    /**
+	/**
+	 * 傾きセンサーの初期化を行う。
+	 */
+	private void initializeSensors() {
+		// 傾きセンサーの登録
+		//     Sensor.TYPE_ORIENTATIONがAPI 8から非推奨になったので、加速度センサー(Sensor.TYPE_ACCELEROMETER)と
+		//   地磁気センサー(Sensor.TYPE_MAGNETIC_FIELD)を組み合わせて、角度を得る必要がある。
+		//     センサー感度（＝遅延許容量）は、一般UI向け(SensorManager.SENSOR_DELAY_UI)にする。
+		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+		List<Sensor> sensorList = sensorManager.getSensorList(Sensor.TYPE_ALL);
+		for (Sensor sensor : sensorList) {
+			// 加速度センサー(Sensor.TYPE_ACCELEROMETER)の登録
+			if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+				setAccSensorFlag(
+						sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+				);
+			}
+			// 地磁気センサー(Sensor.TYPE_MAGNETIC_FIELD)の登録
+			if (sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+				setMagSensorFlag(
+						sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+				);
+			}
+		}
+	}
+
+	/**
      * Called by the system to notify a Service that it is no longer used and is being removed.  The
      * service should clean up any resources it holds (threads, registered
      * receivers, etc) at this point.  Upon return, there will be no more calls
@@ -276,7 +286,7 @@ public class SensorManagerService extends Service implements SensorEventListener
         }
 
         // スクリーンの点灯／消灯を検知するレシーバーの削除
-//        this.unregisterReceiver(screenReceiver);
+        getApplicationContext().unregisterReceiver(screenReceiver);
 		dismissNotification();
     }
 
@@ -293,6 +303,12 @@ public class SensorManagerService extends Service implements SensorEventListener
         builder.setContentTitle(getString(R.string.app_name))
                 .setSmallIcon(R.drawable.ic_launcher);
 		builder.setOngoing(true);
+
+		// Notificationをタップした時に設定画面を出す
+		Intent i = new Intent(getApplicationContext(), MainActivity.class);
+		i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		PendingIntent pi = PendingIntent.getActivity(this, ACTIVITY_REQUEST_CODE, i, PendingIntent.FLAG_UPDATE_CURRENT);
+		builder.setContentIntent(pi);
 
         if (isAvailable) {
             builder.setContentText(getString(R.string.activated));
@@ -490,6 +506,11 @@ public class SensorManagerService extends Service implements SensorEventListener
             if (Intent.ACTION_SCREEN_ON.equals(action)) {
                 // スクリーン点灯時
                 setScreenOn(true);
+
+				// 傾きセンサーが破棄されている場合は、再度初期化を行う
+				if (sensorManager == null) {
+					initializeSensors();
+				}
             } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
                 // スクリーン消灯時
                 setScreenOn(false);
