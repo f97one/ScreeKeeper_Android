@@ -13,7 +13,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -300,8 +299,8 @@ public class SensorManagerService extends Service implements SensorEventListener
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         Notification.Builder builder = new Notification.Builder(getApplicationContext());
-        builder.setContentTitle(getString(R.string.app_name))
-                .setSmallIcon(R.drawable.ic_launcher);
+		builder.setContentText(getString(R.string.click_here));
+        builder.setSmallIcon(R.drawable.ic_launcher);
 		builder.setOngoing(true);
 
 		// Notificationをタップした時に設定画面を出す
@@ -311,17 +310,13 @@ public class SensorManagerService extends Service implements SensorEventListener
 		builder.setContentIntent(pi);
 
         if (isAvailable) {
-            builder.setContentText(getString(R.string.activated));
+            builder.setContentTitle(getString(R.string.is_up));
         } else {
-            builder.setContentText(getString(R.string.not_activated));
+            builder.setContentTitle(getString(R.string.is_stopping));
         }
 
-		// API 16以上だと表示のためのメソッドが変わっているので、それに対応させる。
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-			nm.notify(NOTIFICATION_ID, builder.getNotification());
-		} else {
-			nm.notify(NOTIFICATION_ID, builder.build());
-		}
+		// Notificationを出す
+		nm.notify(NOTIFICATION_ID, builder.getNotification());
     }
 
 	/**
