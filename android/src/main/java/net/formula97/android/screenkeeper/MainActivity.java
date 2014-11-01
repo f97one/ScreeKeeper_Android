@@ -8,6 +8,9 @@ import android.widget.CheckBox;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+
 public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeListener {
 
     private CheckBox cb_startUp;
@@ -17,6 +20,7 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 	private TextView tv_currentMaxPitch;
 	private SeekBar sb_acquireTimeout;
 	private TextView tv_acquire_timeout;
+    private AdView adView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +34,10 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 		tv_currentMaxPitch = (TextView) findViewById(R.id.tv_currentMaxPitch);
 		sb_acquireTimeout = (SeekBar) findViewById(R.id.sb_acquireTimeout);
 		tv_acquire_timeout = (TextView) findViewById(R.id.tv_acquire_timeout);
+
+        adView = (AdView) findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adView.loadAd(adRequest);
     }
 
     @Override
@@ -66,6 +74,7 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
             startService(i);
         }
 
+        adView.resume();
     }
 
     @Override
@@ -83,6 +92,8 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 		editor.putInt(Consts.Prefs.ACQUIRE_TIMEOUT, sb_acquireTimeout.getProgress());
 
 		editor.commit();
+
+        adView.pause();
 	}
 
     /**
@@ -115,7 +126,13 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 		}
 	}
 
-	@Override
+    @Override
+    protected void onDestroy() {
+        adView.destroy();
+        super.onDestroy();
+    }
+
+    @Override
 	public void onStartTrackingTouch(SeekBar seekBar) {
 
 	}
