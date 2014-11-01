@@ -5,14 +5,17 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -23,15 +26,31 @@ import java.util.List;
 /**
  * Created by HAJIME on 14/03/14.
  */
-public class SensorManagerService extends Service implements SensorEventListener {
+public class SensorManagerService extends Service {
 
 	public static final int NOTIFICATION_ID = 0x80869821;
 	final int ACTIVITY_REQUEST_CODE = 0x7fff8001;
+    private final String logTag = SensorManagerService.class.getSimpleName();
 
     private Handler mHandler;
     private SensorManager sensorManager;
+	private MySensorEventListener mySensorEventListener = null;
 
-	public float[] getGravity() {
+    // 角度計算用、加速度＆地磁気
+    float[] gravity = new float[3];
+    float[] magnetic = new float[3];
+    float[] inclinationMatrix = new float[16];
+    float[] rotationMatrix = new float[16];
+    float[] remappedRotation = new float[16];
+    float[] attitude = new float[3];
+
+    // WAKE_LOCKのフィールド
+    PowerManager.WakeLock lock;
+
+    private SvcWatcherService boundPair;
+    private boolean mPairBound = false;
+
+    public float[] getGravity() {
 		return gravity;
 	}
 
@@ -79,16 +98,13 @@ public class SensorManagerService extends Service implements SensorEventListener
 		this.attitude = attitude;
 	}
 
-	// 角度計算用、加速度＆地磁気
-	float[] gravity = new float[3];
-	float[] magnetic = new float[3];
-	float[] inclinationMatrix = new float[16];
-	float[] rotationMatrix = new float[16];
-	float[] remappedRotation = new float[16];
-	float[] attitude = new float[3];
+    public class SensorManagerLocalBinder extends Binder {
+        SensorManagerService getService() {
+            return SensorManagerService.this;
+        }
+    }
 
-	// WAKE_LOCKのフィールド
-	PowerManager.WakeLock lock;
+    private final IBinder mBinder = new SensorManagerLocalBinder();
 
 	/**
 	 * 地磁気センサーの有効／無効の状態を取得する。
@@ -175,8 +191,29 @@ public class SensorManagerService extends Service implements SensorEventListener
 	 */
 	@Override
     public IBinder onBind(Intent intent) {
-        return null;
+        Log.d(logTag + "#onBind", "bound service : intent = " + intent);
+        return mBinder;
     }
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d(logTag + "#onServiceConnected", "connected to service : " + name.getShortClassName());
+
+//            boundPair = ((SvcWatcherService.SvcWatcherLocalBinder)service).getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.d(logTag + "#onServiceDisconnected", "disconnected from service : " + name.getShortClassName());
+
+            boundPair = null;
+
+            // SvcWatcherService再起動処理
+            startAndBindWatcher();
+        }
+    };
 
     /**
      * Called by the system every time a client explicitly starts the service by calling
@@ -221,6 +258,12 @@ public class SensorManagerService extends Service implements SensorEventListener
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
 
+        if (BuildConfig.DEBUG) {
+            Log.d(logTag +"#onStartCommand", "Entered onStartCommand(Intent, int, int)");
+        }
+
+        mySensorEventListener = new MySensorEventListener();
+
 		initializeSensors();
 
 		// スクリーン点灯／消灯を検知するレシーバーを登録
@@ -228,7 +271,7 @@ public class SensorManagerService extends Service implements SensorEventListener
         //   動的にフィルタとレシーバーを登録する。
         IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
 		filter.addAction(Intent.ACTION_SCREEN_OFF);
-        getApplicationContext().registerReceiver(screenReceiver, filter);
+        registerReceiver(screenReceiver, filter);
 
 		// サービス稼働時のスクリーン点灯状況を保存
 		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -237,10 +280,21 @@ public class SensorManagerService extends Service implements SensorEventListener
 		// 最初にWAKE_LOCKのステートを取得しておく
 		lock = getWakeLockState();
 
+        // SvcWatcherServiceが起動していない場合は、startServiceしたあとbindServiceする
+        SvcUtil util = new SvcUtil(this);
+        if (!util.isServiceRunning(SvcWatcherService.class.getCanonicalName())) {
+            startAndBindWatcher();
+        }
         return START_REDELIVER_INTENT;
     }
 
-	/**
+    private void startAndBindWatcher() {
+        Intent i = new Intent(this, SvcWatcherService.class);
+        startService(i);
+        mPairBound = bindService(i, mConnection, BIND_AUTO_CREATE);
+    }
+
+    /**
 	 * 傾きセンサーの初期化を行う。
 	 */
 	private void initializeSensors() {
@@ -254,13 +308,13 @@ public class SensorManagerService extends Service implements SensorEventListener
 			// 加速度センサー(Sensor.TYPE_ACCELEROMETER)の登録
 			if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
 				setAccSensorFlag(
-						sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+						sensorManager.registerListener(mySensorEventListener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
 				);
 			}
 			// 地磁気センサー(Sensor.TYPE_MAGNETIC_FIELD)の登録
 			if (sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
 				setMagSensorFlag(
-						sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+						sensorManager.registerListener(mySensorEventListener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
 				);
 			}
 		}
@@ -278,15 +332,23 @@ public class SensorManagerService extends Service implements SensorEventListener
     public void onDestroy() {
         super.onDestroy();
 
+        if (BuildConfig.DEBUG) {
+            Log.d("SensorManagerService#onDestroy", "Entered onDestroy()");
+        }
+
         if (accSensorFlag || magSensorFlag) {
-            sensorManager.unregisterListener(this);
+            sensorManager.unregisterListener(mySensorEventListener);
             setAccSensorFlag(false);
             setMagSensorFlag(false);
         }
 
         // スクリーンの点灯／消灯を検知するレシーバーの削除
-        getApplicationContext().unregisterReceiver(screenReceiver);
+        unregisterReceiver(screenReceiver);
 		dismissNotification();
+
+        // 相手方サービスをアンバインド
+        unbindService(mConnection);
+        mPairBound = false;
     }
 
 	/**
@@ -326,98 +388,6 @@ public class SensorManagerService extends Service implements SensorEventListener
 		NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		nm.cancel(NOTIFICATION_ID);
 	}
-
-    /**
-     * Called when sensor values have changed.
-     * <p>See {@link android.hardware.SensorManager SensorManager}
-     * for details on possible sensor types.
-     * <p>See also {@link android.hardware.SensorEvent SensorEvent}.
-     * <p/>
-     * <p><b>NOTE:</b> The application doesn't own the
-     * {@link android.hardware.SensorEvent event}
-     * object passed as a parameter and therefore cannot hold on to it.
-     * The object may be part of an internal pool and may be reused by
-     * the framework.
-     *
-     * @param event the {@link android.hardware.SensorEvent SensorEvent}.
-	 * @see android.hardware.SensorEventListener#onSensorChanged(android.hardware.SensorEvent)
-     */
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        // Preferenceの最小角度と最大角度を取得する
-        SharedPreferences pref = getSharedPreferences(Consts.Prefs.NAME, MODE_PRIVATE);
-        int minPitch = pref.getInt(Consts.Prefs.MINIMUM_PITCH, Consts.Prefs.DEFAULT_MIN_PITCH);
-        int maxPitch = pref.getInt(Consts.Prefs.MAXIMUM_PITCH, Consts.Prefs.DEFAULT_MAX_PITCH)
-				+ Consts.Prefs.MAX_PITCH_OFFSET;
-
-        // 実際のコールバックに対する処理
-        switch (event.sensor.getType()) {
-            case Sensor.TYPE_ACCELEROMETER:
-                setGravity(event.values.clone());
-                break;
-            case Sensor.TYPE_MAGNETIC_FIELD:
-                setMagnetic(event.values.clone());
-                break;
-        }
-
-        if (magnetic != null && gravity != null) {
-			boolean result = SensorManager.getRotationMatrix(
-					rotationMatrix,
-					inclinationMatrix,
-					getGravity(),
-					getMagnetic());
-			if (BuildConfig.DEBUG) {
-				if (result) {
-					Log.v("onSensorChanged", "calculate succeeded.");
-				} else {
-					Log.w("onSensorChanged", "calculate failed.");
-				}
-			}
-
-			SensorManager.remapCoordinateSystem(getRotationMatrix(),
-					SensorManager.AXIS_X,
-					SensorManager.AXIS_Z,
-					remappedRotation);
-            SensorManager.getOrientation(getRemappedRotation(), attitude);
-
-            // 現在のピッチがPreferenceの設定値以内の場合は、端末のスリープ設定を解除する
-			int currentAzimuth = (int) Math.floor(Math.toDegrees(getAttitude()[0]));
-            int currentPitch = (int) Math.floor(Math.toDegrees(getAttitude()[1]));
-			int currentRoll = (int) Math.floor(Math.toDegrees(getAttitude()[2]));
-
-            if (currentPitch >= minPitch && currentPitch <= maxPitch) {
-//                if (isScreenOn()) {
-                    disableSleep();
-//                }
-            } else {
-                enableIntoSleep();
-            }
-
-			// 現在の傾きセンサー値を表示
-			if (BuildConfig.DEBUG) {
-				Log.d("onSensorChanged", "Current Azimuth=" + String.valueOf(currentAzimuth) +
-						", Pitch=" + String.valueOf(currentPitch) +
-						", Roll=" + String.valueOf(currentRoll) + "\n" +
-						"raw values = {" + String.valueOf(attitude[0]) + "/" +
-						String.valueOf(attitude[1]) + "/" +
-						String.valueOf(attitude[2]) + "}");
-			}
-		}
-    }
-
-    /**
-     * Called when the accuracy of a sensor has changed.
-     * <p>See {@link android.hardware.SensorManager SensorManager}
-     * for details.
-     *
-     * @param sensor
-     * @param accuracy The new accuracy of this sensor
-	 * @see android.hardware.SensorEventListener#onAccuracyChanged(android.hardware.Sensor, int)
-     */
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
 
     /**
      * 端末のスリープを無効にする。
@@ -477,10 +447,28 @@ public class SensorManagerService extends Service implements SensorEventListener
 				Log.d(this.getClass().getName(), "Screen Lock released.");
 			}
 		} else {
-			Log.d(this.getClass().getName(), "Screen Lock has already released.");
-		}
+            if (BuildConfig.DEBUG) {
+                Log.d(this.getClass().getName(), "Screen Lock has already released.");
+            }
+        }
 		showNotification(false);
 	}
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        if (BuildConfig.DEBUG) {
+            Log.d("SensorManagerService#onLowMemory", "Entered onLowMemory()");
+        }
+    }
+
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        if (BuildConfig.DEBUG) {
+            Log.d("SensorManagerService#onTrimMemory", "Entered onTrimMemory()");
+        }
+    }
 
     /**
      * スクリーンの点灯／消灯を検知するBroadcastReceiver。
@@ -499,17 +487,100 @@ public class SensorManagerService extends Service implements SensorEventListener
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (Intent.ACTION_SCREEN_ON.equals(action)) {
+
+                if (BuildConfig.DEBUG) {
+                    Log.d("ScreenReceiver#onReceive", "Got Broadcast ACTION_SCREEN_ON");
+                }
+
                 // スクリーン点灯時
                 setScreenOn(true);
-
-				// 傾きセンサーが破棄されている場合は、再度初期化を行う
-				if (sensorManager == null) {
-					initializeSensors();
-				}
+				initializeSensors();
             } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
+
+                if (BuildConfig.DEBUG) {
+                    Log.d("ScreenReceiver#onReceive", "Got Broadcast ACTION_SCREEN_OFF");
+                }
+
                 // スクリーン消灯時
                 setScreenOn(false);
+				sensorManager.unregisterListener(mySensorEventListener);
             }
         }
     }
+
+	/**
+	 * SensorEventの変化を受け取るイベントリスナークラス。
+	 */
+	private class MySensorEventListener implements SensorEventListener {
+
+		@Override
+		public void onSensorChanged(SensorEvent event) {
+			// Preferenceの最小角度と最大角度を取得する
+			SharedPreferences pref = getSharedPreferences(Consts.Prefs.NAME, MODE_PRIVATE);
+			int minPitch = pref.getInt(Consts.Prefs.MINIMUM_PITCH, Consts.Prefs.DEFAULT_MIN_PITCH);
+			int maxPitch = pref.getInt(Consts.Prefs.MAXIMUM_PITCH, Consts.Prefs.DEFAULT_MAX_PITCH)
+								   + Consts.Prefs.MAX_PITCH_OFFSET;
+
+			// 実際のコールバックに対する処理
+			switch (event.sensor.getType()) {
+				case Sensor.TYPE_ACCELEROMETER:
+					setGravity(event.values.clone());
+					break;
+				case Sensor.TYPE_MAGNETIC_FIELD:
+					setMagnetic(event.values.clone());
+					break;
+			}
+
+			if (magnetic != null && gravity != null) {
+				boolean result = SensorManager.getRotationMatrix(
+				                                            rotationMatrix,
+				                                            inclinationMatrix,
+				                                            getGravity(),
+				                                            getMagnetic());
+				if (BuildConfig.DEBUG) {
+					if (result) {
+						Log.v("onSensorChanged", "calculate succeeded.");
+					} else {
+						Log.w("onSensorChanged", "calculate failed.");
+					}
+				}
+
+				SensorManager.remapCoordinateSystem(getRotationMatrix(),
+														   SensorManager.AXIS_X,
+														   SensorManager.AXIS_Z,
+														   remappedRotation);
+				SensorManager.getOrientation(getRemappedRotation(), attitude);
+
+				// 現在のピッチがPreferenceの設定値以内の場合は、端末のスリープ設定を解除する
+				int currentAzimuth = (int) Math.floor(Math.toDegrees(getAttitude()[0]));
+				int currentPitch = (int) Math.floor(Math.toDegrees(getAttitude()[1]));
+				int currentRoll = (int) Math.floor(Math.toDegrees(getAttitude()[2]));
+
+				if (currentPitch >= minPitch && currentPitch <= maxPitch) {
+//                if (isScreenOn()) {
+					disableSleep();
+//                }
+				} else {
+					enableIntoSleep();
+				}
+
+				// 現在の傾きセンサー値を表示
+				if (BuildConfig.DEBUG) {
+					Log.d("onSensorChanged", "Current Azimuth=" + String.valueOf(currentAzimuth) +
+													 ", Pitch=" + String.valueOf(currentPitch) +
+													 ", Roll=" + String.valueOf(currentRoll) + "\n" +
+													 "raw values = {" + String.valueOf(attitude[0]) + "/" +
+													 String.valueOf(attitude[1]) + "/" +
+													 String.valueOf(attitude[2]) + "}");
+				}
+			}
+		}
+
+		@Override
+		public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+		}
+	}
+
+
 }
