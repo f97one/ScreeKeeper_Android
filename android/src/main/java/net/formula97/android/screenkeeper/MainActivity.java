@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -75,11 +76,13 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
         // ボタンを押した時の処理
         //   ボタンがひとつしかないので無名関数にする
         btn_startStopManually.setOnClickListener(new View.OnClickListener() {
-			final Intent intent = new Intent(getApplicationContext(), SensorManagerService.class);
+			final Intent intent = new Intent(MainActivity.this, SensorManagerService.class);
 
 			@Override
 			public void onClick(View v) {
 				if (util.isServiceRunning(keeper)) {
+                    Intent i = new Intent(SvcWatcherService.BROADCAST_MSG);
+                    LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(i);
 					stopService(intent);
 					btn_startStopManually.setText(R.string.start_manually);
 				} else {
