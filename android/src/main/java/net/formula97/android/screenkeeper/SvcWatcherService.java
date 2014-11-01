@@ -55,6 +55,8 @@ public class SvcWatcherService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
 
+        Log.d(logTag + "#onStartCommand", "Entered onStartCommand(Intent, int, int)");
+
         SvcUtil util = new SvcUtil(this);
         if (!util.isServiceRunning(SensorManagerService.class.getCanonicalName())) {
             startAndBindManager();
@@ -63,6 +65,8 @@ public class SvcWatcherService extends Service {
     }
 
     private void startAndBindManager() {
+        Log.d(logTag + "startAndBindManager", "Entered startAndBindManager()");
+
         Intent i = new Intent(this, SensorManagerService.class);
         startService(i);
         mPairBound = bindService(i, mConnection, BIND_AUTO_CREATE);
@@ -80,6 +84,8 @@ public class SvcWatcherService extends Service {
 
     @Override
     public void onDestroy() {
+        Log.d(logTag + "#onDestroy", "Entered onDestroy()");
+
         unbindService(mConnection);
         mPairBound = false;
 
