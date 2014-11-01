@@ -30,7 +30,8 @@ public class SvcWatcherService extends Service {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.d(logTag + "#onServiceConnected", "connected to service : name = " + name.getShortClassName());
-//            boundPair = ((SensorManagerService.SensorManagerLocalBinder)service).getService();
+            SensorManagerService.SensorManagerLocalBinder binder = (SensorManagerService.SensorManagerLocalBinder) service;
+            boundPair = binder.getService();
 
         }
 

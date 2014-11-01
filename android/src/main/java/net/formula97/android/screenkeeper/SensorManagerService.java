@@ -200,8 +200,8 @@ public class SensorManagerService extends Service {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.d(logTag + "#onServiceConnected", "connected to service : " + name.getShortClassName());
-
-//            boundPair = ((SvcWatcherService.SvcWatcherLocalBinder)service).getService();
+//            SvcWatcherService.SvcWatcherLocalBinder binder = (SvcWatcherService.SvcWatcherLocalBinder) service;
+//            boundPair = binder.getService();
         }
 
         @Override
