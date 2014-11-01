@@ -27,11 +27,16 @@
             </intent-filter>
         </receiver>
 
-        <service android:name="net.formula97.android.screenkeeper.SensorManagerService"
+        <service
+            android:name="net.formula97.android.screenkeeper.SensorManagerService"
             android:enabled="true"
             android:exported="true"
             android:process=":SensorManagerService" />
-
+        <service
+            android:name="net.formula97.android.screenkeeper.SvcWatcherService"
+            android:enabled="true"
+            android:exported="true"
+            android:process=":SvcWatcherService" />
     </application>
 
 </manifest>
