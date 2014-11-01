@@ -1,54 +1,60 @@
 package net.formula97.android.screenkeeper;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 public class SvcWatcherService extends Service {
 
+    public static final String BROADCAST_MSG = "net.formula97.android.screenkeeper.SET_UNBIND_SERVICE";
+
     private final String logTag = SvcWatcherService.class.getSimpleName();
-
-    public class SvcWatcherLocalBinder extends Binder {
-        SvcWatcherService getService() {
-            return SvcWatcherService.this;
-        }
-    }
-
     private final IBinder mBinder = new SvcWatcherLocalBinder();
-
-    public SvcWatcherService() {
-    }
-
-    private SensorManagerService boundPair;
-    private boolean mPairBound = false;
-
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            Log.d(logTag + "#onServiceConnected", "connected to service : name = " + name.getShortClassName());
-            SensorManagerService.SensorManagerLocalBinder binder = (SensorManagerService.SensorManagerLocalBinder) service;
-            boundPair = binder.getService();
+            Log.i(logTag + "#onServiceConnected", "connected to service : name = " + name.getShortClassName());
+//            SensorManagerService.SensorManagerLocalBinder binder = (SensorManagerService.SensorManagerLocalBinder) service;
+//            boundPair = binder.getService();
 
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            Log.d(logTag + "#onServiceDisconnected", "disconnected from service : name = " + name.getShortClassName());
-
-            boundPair = null;
+            Log.i(logTag + "#onServiceDisconnected", "disconnected from service : name = " + name.getShortClassName());
 
             // SensorManagerServiceを再起動する処理
             startAndBindManager();
         }
     };
+    private boolean mPairBound = false;
+    private BroadcastReceiver unbindReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.i(logTag + "#onReceive", "Received broadcast : " + intent.getAction());
+
+            if (mPairBound) {
+                unbindService(mConnection);
+                mPairBound = false;
+                Log.i(logTag + "#onResume", "SensorManagerService unbound.");
+            }
+        }
+    };
+
+    public SvcWatcherService() {
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
-        Log.d(logTag + "#onBind", "bound service : intent = " + intent);
+        Log.i(logTag + "#onBind", "bound service : intent = " + intent);
         return mBinder;
     }
 
@@ -56,19 +62,30 @@ public class SvcWatcherService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
 
-        Log.d(logTag + "#onStartCommand", "Entered onStartCommand(Intent, int, int)");
+        Log.i(logTag + "#onStartCommand", "Entered onStartCommand(Intent, int, int)");
 
-        SvcUtil util = new SvcUtil(this);
-        if (!util.isServiceRunning(SensorManagerService.class.getCanonicalName())) {
-            startAndBindManager();
+        Intent i = new Intent(this, SensorManagerService.class);
+        mPairBound = bindService(i, mConnection, BIND_AUTO_CREATE);
+        if (mPairBound) {
+            Log.d(logTag + "#onStartCommand", "bound SensorManagerService");
+        } else {
+            Log.w(logTag + "#onStartCommand", "failed to bind SensorManagerService");
         }
+
+        IntentFilter filter = new IntentFilter(BROADCAST_MSG);
+        LocalBroadcastManager.getInstance(this).registerReceiver(unbindReceiver, filter);
+
         return START_STICKY;
     }
 
     private void startAndBindManager() {
-        Log.d(logTag + "startAndBindManager", "Entered startAndBindManager()");
+        Log.i(logTag + "startAndBindManager", "Entered startAndBindManager()");
 
         Intent i = new Intent(this, SensorManagerService.class);
+        SvcUtil util = new SvcUtil(this);
+        if (util.isServiceRunning(SensorManagerService.class.getCanonicalName())) {
+            stopService(i);
+        }
         startService(i);
         mPairBound = bindService(i, mConnection, BIND_AUTO_CREATE);
     }
@@ -85,11 +102,21 @@ public class SvcWatcherService extends Service {
 
     @Override
     public void onDestroy() {
-        Log.d(logTag + "#onDestroy", "Entered onDestroy()");
+        Log.i(logTag + "#onDestroy", "Entered onDestroy()");
 
-        unbindService(mConnection);
-        mPairBound = false;
+        if (mPairBound) {
+            unbindService(mConnection);
+            mPairBound = false;
+        }
+
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(unbindReceiver);
 
         super.onDestroy();
+    }
+
+    public class SvcWatcherLocalBinder extends Binder {
+        SvcWatcherService getService() {
+            return SvcWatcherService.this;
+        }
     }
 }
