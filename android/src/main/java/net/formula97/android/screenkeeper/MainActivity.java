@@ -4,9 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v4.content.LocalBroadcastManager;
-import android.view.View;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -14,7 +11,6 @@ import android.widget.TextView;
 public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeListener {
 
     private CheckBox cb_startUp;
-    private Button btn_startStopManually;
 	private SeekBar sb_minimumPitch;
 	private SeekBar sb_maximumPitch;
 	private TextView tv_currentMinPitch;
@@ -28,7 +24,6 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
         setContentView(R.layout.activity_main);
 
         cb_startUp = (CheckBox) findViewById(R.id.cb_startup);
-        btn_startStopManually = (Button) findViewById(R.id.btn_startStopManually);
 		sb_minimumPitch = (SeekBar) findViewById(R.id.sb_minimumPitch);
 		sb_maximumPitch = (SeekBar) findViewById(R.id.sb_maximumPitch);
 		tv_currentMinPitch = (TextView) findViewById(R.id.tv_currentMinPitch);
@@ -48,13 +43,6 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
         final SvcUtil util = new SvcUtil(getApplicationContext());
         final String keeper = SensorManagerService.class.getCanonicalName();
 
-        // サービスの実行状況に応じて、ボタンのキャプションを変更する
-        if (util.isServiceRunning(keeper)) {
-            btn_startStopManually.setText(R.string.stop_manually);
-        } else {
-            btn_startStopManually.setText(R.string.start_manually);
-        }
-
 		// SeekBarにリスナーを設置
 		sb_minimumPitch.setOnSeekBarChangeListener(this);
 		sb_maximumPitch.setOnSeekBarChangeListener(this);
@@ -73,24 +61,11 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 		onProgressChanged(sb_maximumPitch, currentMaxProgress, false);
 		onProgressChanged(sb_acquireTimeout, currentAcquireTimeout, false);
 
-        // ボタンを押した時の処理
-        //   ボタンがひとつしかないので無名関数にする
-        btn_startStopManually.setOnClickListener(new View.OnClickListener() {
-			final Intent intent = new Intent(MainActivity.this, SensorManagerService.class);
+        if (!util.isServiceRunning(keeper)) {
+            Intent i = new Intent(this, SensorManagerService.class);
+            startService(i);
+        }
 
-			@Override
-			public void onClick(View v) {
-				if (util.isServiceRunning(keeper)) {
-                    Intent i = new Intent(SvcWatcherService.BROADCAST_MSG);
-                    LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(i);
-					stopService(intent);
-					btn_startStopManually.setText(R.string.start_manually);
-				} else {
-					startService(intent);
-					btn_startStopManually.setText(R.string.stop_manually);
-				}
-			}
-		});
     }
 
     @Override
