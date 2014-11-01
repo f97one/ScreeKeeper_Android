@@ -48,7 +48,7 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
         final String keeper = SensorManagerService.class.getCanonicalName();
 
         // サービスの実行状況に応じて、ボタンのキャプションを変更する
-        if (util.isKeeperRunning(keeper)) {
+        if (util.isServiceRunning(keeper)) {
             btn_startStopManually.setText(R.string.stop_manually);
         } else {
             btn_startStopManually.setText(R.string.start_manually);
@@ -79,7 +79,7 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 
 			@Override
 			public void onClick(View v) {
-				if (util.isKeeperRunning(keeper)) {
+				if (util.isServiceRunning(keeper)) {
 					stopService(intent);
 					btn_startStopManually.setText(R.string.start_manually);
 				} else {

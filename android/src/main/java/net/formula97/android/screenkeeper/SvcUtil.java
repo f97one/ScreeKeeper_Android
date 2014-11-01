@@ -28,7 +28,7 @@ public class SvcUtil {
      * SensorManagerServiceが実行中かどうかを判断する。
      * @return boolean型、実行中ならtrue、停止中ならfalseを返す。
      */
-    public boolean isKeeperRunning(String serviceCanonicalName) {
+    public boolean isServiceRunning(String serviceCanonicalName) {
         boolean ret = false;
 
         ActivityManager manager = (ActivityManager)getContext().getSystemService(Context.ACTIVITY_SERVICE);
