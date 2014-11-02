@@ -269,8 +269,16 @@ public class SensorManagerService extends Service {
         return START_REDELIVER_INTENT;
     }
 
+    /**
+     * 相手方サービスを再立ち上げする。
+     */
     private void startAndBindWatcher() {
         Intent i = new Intent(this, SvcWatcherService.class);
+        if (mPairBound) {
+            unbindService(mConnection);
+            mPairBound = false;
+        }
+        stopService(i);
         startService(i);
         mPairBound = bindService(i, mConnection, BIND_AUTO_CREATE);
     }
