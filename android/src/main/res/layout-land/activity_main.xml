@@ -9,136 +9,156 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="net.formula97.android.screenkeeper.MainActivity">
 
+
     <CheckBox
-        android:id="@+id/cb_startup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="@string/activate_on_startup"
+        android:id="@+id/cb_startup"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:text="@string/activate_on_startup"
-        android:textSize="10pt" />
+        android:textSize="10pt"/>
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <TableLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/cb_startup"
-        android:layout_marginTop="@dimen/activity_horizontal_margin"
-        android:text="@string/minimum_pitch"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+        android:layout_below="@id/cb_startup"
+        android:layout_above="@+id/adView"
+        android:layout_marginTop="@dimen/activity_horizontal_margin">
 
-    <SeekBar
-        android:id="@+id/sb_minimumPitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignEnd="@id/sb_maximumPitch"
-        android:layout_alignLeft="@+id/cb_startup"
-        android:layout_alignRight="@id/sb_maximumPitch"
-        android:layout_alignStart="@+id/cb_startup"
-        android:layout_alignTop="@+id/textView"
-        android:layout_toLeftOf="@+id/tv_currentMinPitch"
-        android:layout_toRightOf="@+id/textView"
-        android:layout_toStartOf="@+id/tv_currentMinPitch"
-        android:max="30" />
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
 
-    <TextView
-        android:id="@+id/tv_currentMinPitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/sb_minimumPitch"
-        android:layout_toLeftOf="@+id/textView5"
-        android:layout_toStartOf="@+id/textView5"
-        android:gravity="right"
-        android:text="999"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:layout_below="@+id/cb_startup"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:id="@+id/textView"
+                android:text="@string/minimum_pitch"
+                 />
 
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/sb_minimumPitch"
-        android:layout_marginTop="@dimen/activity_horizontal_margin"
-        android:text="@string/maximum_pitch"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="999"
+                    android:id="@+id/tv_currentMinPitch"
+                    />
 
-    <SeekBar
-        android:id="@+id/sb_maximumPitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/cb_startup"
-        android:layout_alignStart="@+id/cb_startup"
-        android:layout_alignTop="@+id/textView2"
-        android:layout_toLeftOf="@+id/tv_currentMaxPitch"
-        android:layout_toRightOf="@+id/textView2"
-        android:layout_toStartOf="@+id/tv_currentMaxPitch"
-        android:max="45" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="@string/degree"
+                    android:id="@+id/textView5"
+                    />
 
-    <TextView
-        android:id="@+id/tv_currentMaxPitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/textView2"
-        android:layout_toLeftOf="@+id/textView6"
-        android:gravity="right"
-        android:text="999"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+            </LinearLayout>
 
-    <TextView
-        android:id="@+id/textView3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/sb_maximumPitch"
-        android:layout_marginTop="@dimen/activity_horizontal_margin"
-        android:text="@string/keep_timeout"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+            <SeekBar
+                android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/sb_minimumPitch"
+                android:max="30"/>
 
-    <TextView
-        android:id="@+id/tv_acquire_timeout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignEnd="@+id/textView6"
-        android:layout_alignRight="@+id/textView6"
-        android:layout_alignTop="@+id/sb_acquireTimeout"
-        android:text="999"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+        </TableRow>
 
-    <SeekBar
-        android:id="@+id/sb_acquireTimeout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignEnd="@+id/sb_maximumPitch"
-        android:layout_alignLeft="@+id/cb_startup"
-        android:layout_alignRight="@+id/sb_maximumPitch"
-        android:layout_alignStart="@+id/cb_startup"
-        android:layout_alignTop="@+id/textView3"
-        android:indeterminate="false"
-        android:max="600" />
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_marginTop="@dimen/activity_horizontal_margin" >
 
-    <TextView
-        android:id="@+id/textView5"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignTop="@+id/tv_currentMinPitch"
-        android:text="@string/degree"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="@string/maximum_pitch"
+                android:id="@+id/textView2"
+                android:layout_below="@+id/sb_minimumPitch"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                />
 
-    <TextView
-        android:id="@+id/textView6"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignTop="@+id/tv_currentMaxPitch"
-        android:text="@string/degree"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="999"
+                    android:id="@+id/tv_currentMaxPitch"
+                    android:gravity="right"
+                    />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="@string/degree"
+                    android:id="@+id/textView6"
+                    />
+
+            </LinearLayout>
+
+            <SeekBar
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/sb_maximumPitch"
+                android:max="45"/>
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_marginTop="@dimen/activity_horizontal_margin" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="@string/keep_timeout"
+                android:id="@+id/textView3"
+                android:layout_below="@+id/sb_maximumPitch"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="999"
+                    android:id="@+id/tv_acquire_timeout"
+                    />
+
+            </LinearLayout>
+
+            <SeekBar
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/sb_acquireTimeout"
+                android:indeterminate="false"
+                android:max="600" />
+
+        </TableRow>
+
+    </TableLayout>
 
     <com.google.android.gms.ads.AdView
         android:id="@+id/adView"
