@@ -2,8 +2,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="net.formula97.android.screenkeeper.MainActivity" >
     
-    <item android:id="@+id/action_settings"
-        android:title="@string/action_settings"
+    <item android:id="@+id/action_restore_default"
+        android:title="@string/restore_default"
         android:orderInCategory="100"
         android:showAsAction="never" />
 </menu>

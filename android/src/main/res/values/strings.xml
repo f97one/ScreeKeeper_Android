@@ -15,5 +15,6 @@
 	<string name="is_up">Screen Keeper is up.</string>
 	<string name="is_stopping">Screen Keeper is stopping.</string>
 	<string name="click_here">To change App\'s setting, click here.</string>
+    <string name="restore_default">Restore default</string>
 
 </resources>
