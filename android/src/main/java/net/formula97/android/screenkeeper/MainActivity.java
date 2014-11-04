@@ -14,7 +14,7 @@ import android.widget.TextView;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 
-public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeListener {
+public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeListener, MessageDialogs.OnButtonSelectionListener {
 
     private CheckBox cb_startUp;
 	private SeekBar sb_minimumPitch;
@@ -159,10 +159,33 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
         switch (item.getItemId()) {
             case R.id.action_restore_default:
                 // デフォルトに戻す確認をさせる
-
+                MessageDialogs dialogs = MessageDialogs.newInstance(
+                        getString(R.string.confirm_reset),
+                        getString(R.string.confirmation),
+                        MessageDialogs.SET_BOTH_BUTTON
+                );
+                dialogs.show(getFragmentManager(), MessageDialogs.FRAGMENT_KEY);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onButtonSelected(String messageBody, int whichButton) {
+        if (messageBody.equals(getString(R.string.confirm_reset))
+                && whichButton == MessageDialogs.PRESSED_POSITIVE) {
+            // 設定の初期値を復元
+            cb_startUp.setChecked(false);
+
+            sb_minimumPitch.setProgress(Consts.Prefs.DEFAULT_MIN_PITCH);
+            onProgressChanged(sb_minimumPitch, Consts.Prefs.DEFAULT_MIN_PITCH, false);
+
+            sb_maximumPitch.setProgress(Consts.Prefs.DEFAULT_MAX_PITCH);
+            onProgressChanged(sb_maximumPitch, Consts.Prefs.DEFAULT_MAX_PITCH, false);
+
+            sb_acquireTimeout.setProgress(Consts.Prefs.DEFAULT_ACQUIRE_TIMEOUT);
+            onProgressChanged(sb_acquireTimeout, Consts.Prefs.DEFAULT_ACQUIRE_TIMEOUT, false);
         }
     }
 }
