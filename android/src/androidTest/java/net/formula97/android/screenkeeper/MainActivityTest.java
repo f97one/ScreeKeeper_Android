@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.test.SingleLaunchActivityTestCase;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -36,7 +37,7 @@ public class MainActivityTest extends SingleLaunchActivityTestCase<MainActivity>
 
         final int minPitch = 15;
         final int maxPitch = 25;
-        final int timeout = 60;
+        final int timeout = 0;
 
         // UIの設定を変える
         getActivity().runOnUiThread(new Runnable() {
@@ -50,7 +51,7 @@ public class MainActivityTest extends SingleLaunchActivityTestCase<MainActivity>
                 // 最大角 25 (+ 45 = 70)
                 getSbMax().setProgress(maxPitch);
                 getActivity().onProgressChanged(getSbMax(), maxPitch, false);
-                // タイムアウト60
+                // タイムアウト0
                 getSbTimeout().setProgress(timeout);
                 getActivity().onProgressChanged(getSbTimeout(), timeout, false);
             }
@@ -69,9 +70,14 @@ public class MainActivityTest extends SingleLaunchActivityTestCase<MainActivity>
 
         final AlertDialog ad = (AlertDialog) ((MessageDialogs) fragment).getDialog();
 
-        assertNotNull("PositiveButtonを持っている", ad.getButton(DialogInterface.BUTTON_POSITIVE));
-        assertNotNull("NegativeButtonを持っている", ad.getButton(DialogInterface.BUTTON_NEGATIVE));
-//        assertNull("NeutralButtonは持たない", ad.getButton(DialogInterface.BUTTON_NEUTRAL));
+        Button posi = ad.getButton(DialogInterface.BUTTON_POSITIVE);
+        Button nega = ad.getButton(DialogInterface.BUTTON_NEGATIVE);
+        Button neu = ad.getButton(DialogInterface.BUTTON_NEUTRAL);
+
+        assertNotNull("PositiveButtonを持っている", posi);
+        assertNotNull("NegativeButtonを持っている", nega);
+        // NeutralButtonは定義していないはずなんだが、どういうわけか取得できるので、テストとして成立しない
+//        assertNull("NeutralButtonは持たない", neu);
 
         getActivity().runOnUiThread(new Runnable() {
             @Override
@@ -87,7 +93,7 @@ public class MainActivityTest extends SingleLaunchActivityTestCase<MainActivity>
 
         assertEquals("最小角は15のまま", minPitch, currentMin);
         assertEquals("最大角は70のまま", maxPitch + Consts.Prefs.MAX_PITCH_OFFSET, currentMax);
-        assertEquals("タイムアウトは60秒", String.valueOf(timeout) + getActivity().getString(R.string.seconds), currentTimeout);
+        assertEquals("タイムアウトは「no timeout」", getActivity().getString(R.string.no_timeout), currentTimeout);
 
         fragment = getActivity().getFragmentManager().findFragmentByTag(MessageDialogs.FRAGMENT_KEY);
 
