@@ -20,5 +20,6 @@
     <string name="confirm_reset">Are you sure you want to return to the default settings?</string>
     <string name="confirmation">Confirmation</string>
     <string name="stop_service">Stop Service</string>
+    <string name="svc_stop_successfuly">Service was stopped successfully.</string>
 
 </resources>

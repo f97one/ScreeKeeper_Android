@@ -16,4 +16,5 @@
     <string name="stop_manually">手動で停止</string>
     <string name="stop_service">サービス停止</string>
     <string name="restore_default">デフォルトに戻す</string>
+    <string name="svc_stop_successfuly">サービスは停止されました。</string>
 </resources>
