@@ -6,4 +6,9 @@
         android:title="@string/restore_default"
         android:orderInCategory="100"
         android:showAsAction="never" />
+    <item android:id="@+id/stop_service"
+        android:title="@string/stop_service"
+        android:orderInCategory="90"
+        android:showAsAction="never" />
+
 </menu>
