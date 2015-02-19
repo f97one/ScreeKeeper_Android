@@ -19,5 +19,6 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="confirm_reset">Are you sure you want to return to the default settings?</string>
     <string name="confirmation">Confirmation</string>
+    <string name="stop_service">Stop Service</string>
 
 </resources>

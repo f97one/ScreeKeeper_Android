@@ -14,4 +14,5 @@
     <string name="seconds">秒</string>
     <string name="start_manually">手動で開始</string>
     <string name="stop_manually">手動で停止</string>
+    <string name="stop_service">サービス停止</string>
 </resources>
