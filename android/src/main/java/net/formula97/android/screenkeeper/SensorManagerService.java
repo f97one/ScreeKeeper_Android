@@ -19,7 +19,6 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import java.util.List;
@@ -327,7 +326,7 @@ public class SensorManagerService extends Service {
 
         // 相方にバインド解除指示のブロードキャストを投げる
         Intent i = new Intent(SvcWatcherService.BROADCAST_MSG);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(i);
+        sendBroadcast(i);
 
         if (accSensorFlag || magSensorFlag) {
             sensorManager.unregisterListener(mySensorEventListener);

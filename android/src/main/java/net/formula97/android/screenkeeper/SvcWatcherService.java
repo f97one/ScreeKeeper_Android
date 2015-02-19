@@ -9,7 +9,6 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.IBinder;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 public class SvcWatcherService extends Service {
@@ -36,6 +35,10 @@ public class SvcWatcherService extends Service {
         }
     };
     private boolean mPairBound = false;
+
+    /**
+     * バインド解除を受け付けるBroadcastReceiver
+     */
     private BroadcastReceiver unbindReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -72,8 +75,9 @@ public class SvcWatcherService extends Service {
             Log.w(logTag + "#onStartCommand", "failed to bind SensorManagerService");
         }
 
+        // バインド解除受付のBroadcastReceiverを登録
         IntentFilter filter = new IntentFilter(BROADCAST_MSG);
-        LocalBroadcastManager.getInstance(this).registerReceiver(unbindReceiver, filter);
+        registerReceiver(unbindReceiver, filter);
 
         return START_STICKY;
     }
@@ -109,7 +113,8 @@ public class SvcWatcherService extends Service {
             mPairBound = false;
         }
 
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(unbindReceiver);
+        // バインド解除BroadcastReceiverを登録解除
+        unregisterReceiver(unbindReceiver);
 
         super.onDestroy();
     }
