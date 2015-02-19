@@ -354,7 +354,7 @@ public class SensorManagerService extends Service {
 
         Notification.Builder builder = new Notification.Builder(getApplicationContext());
         builder.setContentText(getString(R.string.click_here));
-        builder.setSmallIcon(R.drawable.ic_launcher);
+        builder.setSmallIcon(R.drawable.ic_stat_name);
         builder.setOngoing(true);
 
         // Notificationをタップした時に設定画面を出す
