@@ -4,12 +4,14 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.CheckBox;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -156,6 +158,8 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        boolean ret = true;
+
         switch (item.getItemId()) {
             case R.id.action_restore_default:
                 // デフォルトに戻す確認をさせる
@@ -165,10 +169,27 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
                         MessageDialogs.SET_BOTH_BUTTON
                 );
                 dialogs.show(getFragmentManager(), MessageDialogs.FRAGMENT_KEY);
-                return true;
+                break;
+            case R.id.stop_service:
+                // バインド解除指示のブロードキャストを投げる
+                Intent i = new Intent(SvcWatcherService.BROADCAST_MSG);
+                sendBroadcast(i);
+
+                // サービス停止
+                Intent svc = new Intent(this, SensorManagerService.class);
+                if (stopService(svc)) {
+                    Log.d(this.getClass().getSimpleName() + "#onOptionsItemSelected", "SensorManagerServiceの停止に成功");
+                    Toast.makeText(this, R.string.svc_stop_successfuly, Toast.LENGTH_LONG).show();
+                } else {
+                    Log.w(this.getClass().getSimpleName() + "#onOptionsItemSelected", "SensorManagerServiceはすでに停止済み");
+                }
+
+                break;
             default:
-                return super.onOptionsItemSelected(item);
+                ret = super.onOptionsItemSelected(item);
         }
+
+        return ret;
     }
 
     @Override
